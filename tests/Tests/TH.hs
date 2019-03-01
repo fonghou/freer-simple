@@ -4,7 +4,8 @@ module Tests.TH where
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty)
 
-import Control.Monad.Freer (Eff, run, interpret, type(~>))
+import Control.Monad.Freer (Eff, run, type(~>))
+import Control.Monad.Freer.Interpretation (interpret)
 import Control.Monad.Freer.TH (makeEffect)
 
 -- Create a test GADT for our effects.

@@ -9,13 +9,13 @@
 
 module Control.Monad.Freer.Interpretation where
 
-import           Control.Monad.Freer.Internal
 import           Control.Monad.Morph (MFunctor (..))
 import           Control.Monad.Trans.Class (MonadTrans (..))
 import           Control.Monad.Trans.Cont
 import qualified Control.Monad.Trans.Except as E
 import qualified Control.Monad.Trans.State.Strict as S
 import           Data.OpenUnion.Internal
+import           Control.Monad.Freer.Internal
 
 
 ------------------------------------------------------------------------------
@@ -79,18 +79,22 @@ replace = naturally weaken
 -- | Run an effect via the side-effects of a monad transformer.
 transform
     :: ( MonadTrans t
-       , MFunctor t
        , forall m. Monad m => Monad (t m)
        )
-    => (forall m. Monad m => t m a -> m b)
-       -- ^ The strategy for getting out of the monad transformer.
+    => (forall m. Eff r ~> m -> t (Eff r) ~> t m)
+       -- ^ The strategy for hoisting a natural transformation. This is usually
+       -- just 'hoist'.
+    -> (forall m. t m a -> m b)
+       -- ^ The strategy for getting out of the monad transformer. This is
+       -- usually just @runWhateverT@.
     -> (eff ~> t (Eff r))
     -> Eff (eff ': r) a
     -> Eff r b
-transform lower f (Freer m) = Freer $ \k -> lower $ m $ \u ->
-  case decomp u of
-    Left  x -> lift $ k x
-    Right y -> hoist (usingFreer k) $ f y
+transform hoist' lower f (Freer m) =
+  Freer $ \k -> lower $ m $ \u ->
+    case decomp u of
+      Left  x -> lift $ k x
+      Right y -> hoist' (usingFreer k) $ f y
 {-# INLINE[3] transform #-}
 #endif
 
@@ -121,6 +125,7 @@ intercept f (Freer m) = Freer $ \k -> m $ \u ->
     Nothing -> k u
     Just e  -> usingFreer k $ f e
 {-# INLINE intercept #-}
+
 
 ------------------------------------------------------------------------------
 -- | Like 'interpret', but with access to intermediate state.
@@ -197,13 +202,16 @@ introduce :: Eff (eff ': r) a -> Eff (eff ': u ': r) a
 introduce = hoistEff intro1
 {-# INLINE introduce #-}
 
+
 introduce2 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': r) a
 introduce2 = hoistEff intro2
 {-# INLINE introduce2 #-}
 
+
 introduce3 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': r) a
 introduce3 = hoistEff intro3
 {-# INLINE introduce3 #-}
+
 
 introduce4 :: Eff (eff ': r) a -> Eff (eff ': u ': v ':x ': y ': r) a
 introduce4 = hoistEff intro4

@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main (main) where
 
 import Control.Monad (forever, when)
@@ -5,7 +7,9 @@ import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
 import System.Environment (getArgs)
 
-import Control.Monad.Freer (Eff, Member, runM)
+import Control.Monad.Freer (Eff, Member, runM, send)
+import Control.Monad.Freer.Bracket
+import Control.Monad.Freer.Error
 
 import Capitalize (Capitalize, capitalize, runCapitalize)
 import Console
@@ -52,9 +56,23 @@ mainConsoleB = runM (runCapitalize (runConsoleM capitalizingService))
 --        Eff '[Capitalize, IO] () -'           |
 --           Eff '[Console, Capitalize, IO] () -'
 
+printEff :: Member IO r => String -> Eff r ()
+printEff = send @IO . putStrLn
+
+fromRight :: Either a b -> b
+fromRight = either undefined id
+
+mainBracket :: IO ()
+mainBracket = runBracket $ liftBracket (fmap fromRight . runError @String) $ do
+  bracket (printEff "alloc") (const $ printEff "dealloc") $ const $ do
+    printEff "hi"
+    _ <- throwError "fuck"
+    printEff "bye"
+
 examples :: [(String, IO ())]
 examples =
     [ ("pure", mainPure)
+    , ("bracket", mainBracket)
     , ("consoleA", mainConsoleA)
     , ("consoleB", mainConsoleB)
     ]

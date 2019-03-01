@@ -1,5 +1,5 @@
 name: freer-simple
-version: 1.2.1.0
+version: 1.3.0.0
 category: Control
 synopsis: Implementation of a friendly effect system for Haskell.
 description: |
@@ -60,6 +60,7 @@ library:
   - template-haskell >= 2.11 && < 2.15
   - transformers
   - mmorph
+  - resourcet
 
 executables:
   freer-examples:
