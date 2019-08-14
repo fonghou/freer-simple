@@ -217,6 +217,20 @@ module Control.Monad.Freer
   , run
   , runM
 
+    -- ** Interpretation
+  , interpret
+  , intercept
+  , interceptS
+  , reinterpret
+  , introduce
+  , introduce2
+  , introduce3
+  , introduce4
+  , stateful
+  , shortCircuit
+  , subsume
+  , transform
+
     -- * Re-exported bindings
   , type (~>)
   ) where
@@ -235,3 +249,17 @@ import Control.Monad.Freer.Internal
   , sendM
   )
 
+import Control.Monad.Freer.Interpretation
+  ( interpret
+  , intercept
+  , interceptS
+  , reinterpret
+  , introduce
+  , introduce2
+  , introduce3
+  , introduce4
+  , stateful
+  , shortCircuit
+  , subsume
+  , transform
+  )

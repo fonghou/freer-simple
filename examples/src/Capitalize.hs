@@ -6,8 +6,7 @@ module Capitalize
 
 import Data.Char (toUpper)
 
-import Control.Monad.Freer (Eff, Member, send)
-import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer
 
 data Capitalize v where
   Capitalize :: String -> Capitalize String

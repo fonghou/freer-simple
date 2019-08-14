@@ -197,7 +197,7 @@ naturally z f (Freer m) = Freer $ \k -> m $ \u ->
 -- often useful for interpreters which would like to introduce some intermediate
 -- effects before immediately handling them.
 --
--- Also see 'replace'.
+-- Also see 'reinterpret'.
 introduce :: Eff (eff ': r) a -> Eff (eff ': u ': r) a
 introduce = hoistEff intro1
 {-# INLINE introduce #-}

@@ -9,8 +9,7 @@ import qualified Control.Monad.Free as Free
 import Criterion (bench, bgroup, whnf)
 import Criterion.Main (defaultMain)
 
-import Control.Monad.Freer (Member, Eff, run, send)
-import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer
 import Control.Monad.Freer.Error (runError, throwError)
 import Control.Monad.Freer.State (get, put, runState)
 

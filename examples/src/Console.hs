@@ -11,9 +11,8 @@ module Console
 import Data.Functor.Identity
 import System.Exit (exitSuccess)
 
-import Control.Monad.Freer (Eff, LastMember, Member, run, runM, send)
+import Control.Monad.Freer
 import Control.Monad.Freer.Error (Error, runError, throwError)
-import Control.Monad.Freer.Interpretation
 import Control.Monad.Freer.State (State, get, put, runState)
 import Control.Monad.Freer.Writer (Writer, runWriter, tell)
 
