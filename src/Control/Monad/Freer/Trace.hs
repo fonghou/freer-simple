@@ -30,5 +30,5 @@ trace = send . Trace
 
 -- | An 'IO' handler for 'Trace' effects.
 runTrace :: Member IO r => Eff (Trace ': r) ~> Eff r
-runTrace = natural @IO $ \(Trace s) -> putStrLn s
+runTrace = subsume @IO $ \(Trace s) -> putStrLn s
 

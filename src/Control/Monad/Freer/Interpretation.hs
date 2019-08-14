@@ -20,12 +20,12 @@ import           Control.Monad.Freer.Internal
 
 ------------------------------------------------------------------------------
 -- | Interpret as an effect in terms of another effect in the stack.
-natural
+subsume
     :: Member eff' r
     => (eff ~> eff')
     -> Eff (eff ': r) ~> Eff r
-natural = naturally id
-{-# INLINE natural #-}
+subsume = naturally id
+{-# INLINE subsume #-}
 
 
 ------------------------------------------------------------------------------
@@ -67,11 +67,11 @@ withStateful s f = stateful f s
 -- | Replace the topmost layer of the effect stack with another. This is often
 -- useful for interpreters which would like to introduce some intermediate
 -- effects before immediately handling them.
-replace
+reinterpret
     :: (eff1 ~> eff2)
     -> Eff (eff1 ': r) ~> Eff (eff2 ': r)
-replace = naturally weaken
-{-# INLINE replace #-}
+reinterpret = naturally weaken
+{-# INLINE reinterpret #-}
 
 
 #if __GLASGOW_HASKELL__ >= 806

@@ -68,7 +68,7 @@ runConsolePure inputs
 -------------------------------------------------------------------------------
 runConsoleM :: forall effs a. LastMember IO effs
             => Eff (Console ': effs) a -> Eff effs a
-runConsoleM = natural @IO $ \case
+runConsoleM = subsume @IO $ \case
   PutStrLn msg -> putStrLn msg
   GetLine -> getLine
   ExitSuccess -> exitSuccess
