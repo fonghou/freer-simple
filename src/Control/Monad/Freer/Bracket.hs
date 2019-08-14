@@ -18,16 +18,17 @@
 {-# LANGUAGE ViewPatterns               #-}
 {-# OPTIONS_GHC -Wall                   #-}
 
-module Control.Monad.Freer.Bracket (type Bracketed, liftBracket, runBracket, bracket) where
+module Control.Monad.Freer.Bracket 
+  (type Bracketed, liftBracket, runBracket, bracket, finally) where
 
 import Data.Proxy
 import GHC.TypeLits
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Resource
-import           Data.OpenUnion
-import           Data.OpenUnion.Internal
-import           Control.Monad.Freer.Interpretation
-import           Control.Monad.Freer.Internal
+import Data.OpenUnion
+import Data.OpenUnion.Internal
+import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer.Internal
 import Data.Coerce
 
 
@@ -96,3 +97,9 @@ bracket
     -> Bracketed r b
 bracket alloc dealloc doit = send $ Bracket id alloc dealloc doit
 
+finally
+  :: KnownNat (Length r)
+  => Eff r a
+  -> Eff r ()
+  -> Bracketed r a
+finally act end = bracket (pure ()) (pure end) (const act)
