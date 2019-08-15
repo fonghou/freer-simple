@@ -18,8 +18,8 @@ module Control.Monad.Freer.Coroutine
     -- * Handle Yield Effect
   , Status(..)
   , runC
-  , interposeC
-  , replyC
+  , resumeC
+  , interceptC
   ) where
 
 import Control.Monad.Freer.Internal (Eff, Member, send)
@@ -50,23 +50,23 @@ data Status effs a b r
   -- ^ Coroutine is done with a result value of type @r@.
   | Continue a (b -> Eff effs (Status effs a b r))
   -- ^ Reporting a value of the type @a@, and resuming with the value of type
-  -- @b@, possibly ending with a value of type @x@.
+  -- @b@, possibly ending with a value of type @r@.
 
 -- | Reply to a coroutine effect by returning the Continue constructor.
-replyC
+resumeC
   :: Yield a b c
   -> (c -> Eff effs (Status effs a b r))
   -> Eff effs (Status effs a b r)
-replyC (Yield a k) arr = pure $ Continue a (arr . k)
+resumeC (Yield a k) arr = pure $ Continue a (arr . k)
 
 -- | Launch a coroutine and report its status.
 runC :: Eff (Yield a b ': effs) r -> Eff effs (Status effs a b r)
-runC = relay (pure . Done) replyC
+runC = relay (pure . Done) resumeC
 
 -- | Launch a coroutine and report its status, without handling (removing)
 -- 'Yield' from the typelist. This is useful for reducing nested coroutines.
-interposeC
+interceptC
   :: Member (Yield a b) effs
   => Eff effs r
   -> Eff effs (Status effs a b r)
-interposeC = interceptRelay (pure . Done) replyC
+interceptC = interceptRelay (pure . Done) resumeC

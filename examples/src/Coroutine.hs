@@ -1,20 +1,22 @@
 module Coroutine () where
 
--- import Control.Monad.Freer.Coroutine
+import Control.Monad.Freer
+import Control.Monad.Freer.Coroutine
+import Control.Monad.Freer.Reader
+import Control.Monad.Freer.Trace
 
-{-
 
 -- First example of coroutines
 yieldInt :: Member (Yield Int ()) r => Int -> Eff r ()
-yieldInt = yield
+yieldInt i = yield i id
 
 th1 :: Member (Yield Int ()) r => Eff r ()
 th1 = yieldInt 1 >> yieldInt 2
 
-
+c1 :: Member IO r => Eff r ()
 c1 = runTrace (loop =<< runC th1)
- where loop (Y x k) = trace (show (x::Int)) >> k () >>= loop
-       loop Done    = trace "Done"
+ where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
+       loop (Done _)    = trace "Done"
 {-
 1
 2
@@ -30,11 +32,11 @@ Done
 th2 :: (Member (Yield Int ()) r, Member (Reader Int) r) => Eff r ()
 th2 = ask >>= yieldInt >> (ask >>= yieldInt)
 
-
 -- Code is essentially the same as in transf.hs; no liftIO though
-c2 = runTrace $ runReader (loop =<< runC th2) (10::Int)
- where loop (Y x k) = trace (show (x::Int)) >> k () >>= loop
-       loop Done    = trace "Done"
+c2 :: Member IO r => Eff r ()
+c2 = runTrace $ runReader (10::Int) (loop =<< runC th2)
+ where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
+       loop (Done _)    = trace "Done"
 {-
 10
 10
@@ -42,9 +44,10 @@ Done
 -}
 
 -- locally changing the dynamic environment for the suspension
-c21 = runTrace $ runReader (loop =<< runC th2) (10::Int)
- where loop (Y x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
-       loop Done    = trace "Done"
+c21 :: Member IO r => Eff r ()
+c21 = runTrace $ runReader (10::Int) (loop =<< runC th2)
+ where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
+       loop (Done _)   = trace "Done"
 {-
 10
 11
@@ -56,9 +59,10 @@ th3 :: (Member (Yield Int ()) r, Member (Reader Int) r) => Eff r ()
 th3 = ay >> ay >> local (+(10::Int)) (ay >> ay)
  where ay = ask >>= yieldInt
 
-c3 = runTrace $ runReader (loop =<< runC th3) (10::Int)
- where loop (Y x k) = trace (show (x::Int)) >> k () >>= loop
-       loop Done    = trace "Done"
+c3 :: Member IO r => Eff r ()
+c3 = runTrace $ runReader (10::Int) (loop =<< runC th3)
+ where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
+       loop (Done _)   = trace "Done"
 {-
 10
 10
@@ -68,9 +72,10 @@ Done
 -}
 
 -- locally changing the dynamic environment for the suspension
-c31 = runTrace $ runReader (loop =<< runC th3) (10::Int)
- where loop (Y x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
-       loop Done    = trace "Done"
+c31 :: Member IO r => Eff r ()
+c31 = runTrace $ runReader  (10::Int) (loop =<< runC th3)
+ where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
+       loop (Done _)   = trace "Done"
 {-
 10
 11
@@ -84,9 +89,10 @@ Done
 
 -- We now make explicit that the client computation, run by th4,
 -- is abstract. We abstract it out of th4
-c4 = runTrace $ runReader (loop =<< runC (th4 client)) (10::Int)
- where loop (Y x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
-       loop Done    = trace "Done"
+c4 :: Member IO r => Eff r ()
+c4 = runTrace $ runReader (10::Int) (loop =<< runC (th4 client))
+ where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
+       loop (Done _)   = trace "Done"
 
        -- cl, client, ay are monomorphic bindings
        th4 cl = cl >> local (+(10::Int)) cl
@@ -102,9 +108,10 @@ Done
 -}
 
 -- Even more dynamic example
-c5 = runTrace $ runReader (loop =<< runC (th client)) (10::Int)
- where loop (Y x k) = trace (show (x::Int)) >> local (\y->x+1) (k ()) >>= loop
-       loop Done    = trace "Done"
+c5 :: Member IO r => Eff r ()
+c5 = runTrace $ runReader (10::Int) (loop =<< runC (th client))
+ where loop (Continue x k) = trace (show (x::Int)) >> local (\_->x+1) (k ()) >>= loop
+       loop (Done _)   = trace $ "Done"
 
        -- cl, client, ay are monomorphic bindings
        client = ay >> ay >> ay
@@ -112,9 +119,9 @@ c5 = runTrace $ runReader (loop =<< runC (th client)) (10::Int)
 
        -- There is no polymorphic recursion here
        th cl = do
-         cl
+         _ <- cl
          v <- ask
-         (if v > (20::Int) then id else local (+(5::Int))) cl
+         _ <- (if v > (20::Int) then id else local (+(5::Int))) cl
          if v > (20::Int) then return () else local (+(10::Int)) (th cl)
 {-
 10
@@ -133,11 +140,12 @@ Done
 -}
 
 -- And even more
+c7 :: Member IO r => Eff r ()
 c7 = runTrace $
-      runReader (runReader (loop =<< runC (th client)) (10::Int)) (1000::Double)
- where loop (Y x k) = trace (show (x::Int)) >>
-                      local (\y->fromIntegral (x+1)::Double) (k ()) >>= loop
-       loop Done    = trace "Done"
+      runReader (1000::Double) (runReader (10::Int) (loop =<< runC (th client))) 
+ where loop (Continue x k) = trace (show (x::Int)) >>
+                      local (\_->fromIntegral (x+1)::Double) (k ()) >>= loop
+       loop (Done _)    = trace "Done"
 
        -- cl, client, ay are monomorphic bindings
        client = ay >> ay >> ay
@@ -146,9 +154,9 @@ c7 = runTrace $
 
        -- There is no polymorphic recursion here
        th cl = do
-         cl
+         _ <- cl
          v <- ask
-         (if v > (20::Int) then id else local (+(5::Int))) cl
+         _ <- (if v > (20::Int) then id else local (+(5::Int))) cl
          if v > (20::Int) then return () else local (+(10::Int)) (th cl)
 
 {-
@@ -173,11 +181,12 @@ c7 = runTrace $
 Done
 -}
 
+c7' :: Member IO r => Eff r ()
 c7' = runTrace $
-      runReader (runReader (loop =<< runC (th client)) (10::Int)) (1000::Double)
- where loop (Y x k) = trace (show (x::Int)) >>
-                      local (\y->fromIntegral (x+1)::Double) (k ()) >>= loop
-       loop Done    = trace "Done"
+      runReader (1000::Double) (runReader (10::Int) (loop =<< runC (th client)) ) 
+ where loop (Continue x k) = trace (show (x::Int)) >>
+                      local (\_->fromIntegral (x+1)::Double) (k ()) >>= loop
+       loop (Done _)   = trace "Done"
 
        -- cl, client, ay are monomorphic bindings
        client = ay >> ay >> ay
@@ -186,9 +195,9 @@ c7' = runTrace $
 
        -- There is no polymorphic recursion here
        th cl = do
-         cl
+         _ <- cl
          v <- ask
-         (if v > (20::Int) then id else local (+(5::Double))) cl
+         _ <- (if v > (20::Int) then id else local (+(5::Double))) cl
          if v > (20::Int) then return () else local (+(10::Int)) (th cl)
 {-
 1010
@@ -212,4 +221,3 @@ c7' = runTrace $
 Done
 -}
 
--}

@@ -41,6 +41,7 @@ data Reader r a where
 -- | Request a value of the environment.
 ask :: forall r effs. Member (Reader r) effs => Eff effs r
 ask = send Ask
+{-# INLINE ask #-}
 
 -- | Request a value of the environment, and apply as selector\/projection
 -- function to it.
@@ -51,6 +52,7 @@ asks
   -- ^ The selector\/projection function to be applied to the environment.
   -> Eff effs a
 asks f = f <$> ask
+{-# INLINE asks #-}
 
 -- | Handler for 'Reader' effects.
 runReader :: forall r effs a. r -> Eff (Reader r ': effs) a -> Eff effs a
@@ -68,6 +70,7 @@ local
 local f m = do
   r <- asks f
   intercept @(Reader r) (\Ask -> pure r) m
+{-# INLINE local #-}
 
 -- $simpleReaderExample
 --

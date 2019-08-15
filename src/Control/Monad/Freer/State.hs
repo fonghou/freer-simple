@@ -53,37 +53,45 @@ data State s r where
 -- | Retrieve the current value of the state of type @s :: *@.
 get :: forall s effs. Member (State s) effs => Eff effs s
 get = send Get
+{-# INLINE get #-}
 
 -- | Set the current state to a specified value of type @s :: *@.
 put :: forall s effs. Member (State s) effs => s -> Eff effs ()
 put s = send (Put s)
+{-# INLINE put #-}
 
 -- | Modify the current state of type @s :: *@ using provided function
 -- @(s -> s)@.
 modify :: forall s effs. Member (State s) effs => (s -> s) -> Eff effs ()
 modify f = fmap f get >>= put
+{-# INLINE modify #-}
 
 -- | Retrieve a specific component of the current state using the provided
 -- projection function.
 gets :: forall s a effs. Member (State s) effs => (s -> a) -> Eff effs a
 gets f = f <$> get
+{-# INLINE gets #-}
 
 -- | Handler for 'State' effects.
 runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (a, s)
 runState = stateful stateNat
+{-# INLINE runState #-}
 
 stateNat :: State s ~> S.StateT s (Eff r)
 stateNat = \case
   Get   -> S.get
   Put s -> S.put s
+{-# INLINE stateNat #-}
 
 -- | Run a 'State' effect, returning only the final state.
 execState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs s
 execState s = fmap snd . runState s
+{-# INLINE execState #-}
 
 -- | Run a State effect, discarding the final state.
 evalState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs a
 evalState s = fmap fst . runState s
+{-# INLINE evalState #-}
 
 -- | An encapsulated State handler, for transactional semantics. The global
 -- state is updated only if the 'transactionState' finished successfully.

@@ -46,7 +46,6 @@ runConsole = runM . runConsoleM
 runConsolePure :: [String] -> Eff '[Console] w -> [String]
 runConsolePure inputs
     = snd
-    . fst
     . run
     . runWriter
     . runState inputs

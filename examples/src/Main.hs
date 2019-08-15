@@ -66,6 +66,7 @@ mainBracket :: IO ()
 mainBracket = runBracket $ liftBracket (fmap fromRight . runError @String) $ do
   bracket (printEff "alloc") (const $ printEff "dealloc") $ const $ do
     printEff "hi"
+    -- _ <- error "fuck"
     _ <- throwError "fuck"
     printEff "bye"
 
