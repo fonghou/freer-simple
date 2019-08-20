@@ -219,15 +219,15 @@ module Control.Monad.Freer
 
     -- ** Interpretation
   , interpret
-  , intercept
-  , interceptS
+  , interpose
+  , interposeState
   , reinterpret
   , introduce
   , introduce2
   , introduce3
   , introduce4
-  , stateful
   , shortCircuit
+  , stateful
   , subsume
   , transform
 
@@ -251,15 +251,15 @@ import Control.Monad.Freer.Internal
 
 import Control.Monad.Freer.Interpretation
   ( interpret
-  , intercept
-  , interceptS
+  , interpose
+  , interposeState
   , reinterpret
   , introduce
   , introduce2
   , introduce3
   , introduce4
-  , stateful
   , shortCircuit
+  , stateful
   , subsume
   , transform
   )

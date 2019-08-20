@@ -19,7 +19,7 @@ import           Control.Monad.Freer.Internal
 
 
 ------------------------------------------------------------------------------
--- | Interpret as an effect in terms of another effect in the stack.
+-- | Interpret an effect in terms of another effect in the stack.
 subsume
     :: Member eff' r
     => (eff ~> eff')
@@ -54,7 +54,7 @@ stateful f s (Freer m) = Freer $ \k -> flip S.runStateT s $ m $ \u ->
 
 
 ------------------------------------------------------------------------------
--- | Like 'interpret', but with access to intermediate state.
+-- | flip stateful
 withStateful
     :: s
     -> (eff ~> S.StateT s (Eff r))
@@ -115,31 +115,32 @@ shortCircuit f (Freer m) = Freer $ \k -> E.runExceptT $ m $ \u ->
 
 
 ------------------------------------------------------------------------------
--- | Intercept an effect without removing it from the effect stack.
-intercept
+-- |Like 'interpret', but instead of handling the effect, allows responding to
+-- the effect while leaving it unhandled.
+interpose
     :: Member eff r
     => (eff ~> Eff r)
     -> Eff r ~> Eff r
-intercept f (Freer m) = Freer $ \k -> m $ \u ->
+interpose f (Freer m) = Freer $ \k -> m $ \u ->
   case prj u of
     Nothing -> k u
     Just e  -> usingFreer k $ f e
-{-# INLINE intercept #-}
+{-# INLINE interpose #-}
 
 
 ------------------------------------------------------------------------------
--- | Like 'interpret', but with access to intermediate state.
-interceptS
+-- | Like 'Interpose', but with access to intermediate state.
+interposeState
     :: Member eff r
     => (eff ~> S.StateT s (Eff r))
     -> s
     -> Eff r a -> Eff r (a, s)
-interceptS f s (Freer m) = Freer $ \k ->
+interposeState f s (Freer m) = Freer $ \k ->
   usingFreer k $ flip S.runStateT s $ m $ \u ->
     case prj u of
       Nothing -> lift $ liftEff u
       Just e  -> f e
-{-# INLINE interceptS #-}
+{-# INLINE interposeState #-}
 
 
 ------------------------------------------------------------------------------
@@ -163,19 +164,19 @@ relay pure' bind' (Freer m) = Freer $ \k ->
 
 
 ------------------------------------------------------------------------------
--- | Like 'interpret' and 'relay'.
-interceptRelay
+-- | Like 'interpose' and 'relay'.
+interposeRelay
     :: Member eff r
     => (a -> Eff r b)
     -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
     -> Eff r a
     -> Eff r b
-interceptRelay pure' bind' (Freer m) = Freer $ \k ->
+interposeRelay pure' bind' (Freer m) = Freer $ \k ->
   usingFreer k $ flip runContT pure' $ m $ \u ->
     case prj u of
       Nothing -> lift $ liftEff u
       Just y  -> ContT $ bind' y
-{-# INLINE interceptRelay #-}
+{-# INLINE interposeRelay #-}
 
 
 ------------------------------------------------------------------------------

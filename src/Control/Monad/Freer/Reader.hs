@@ -69,7 +69,7 @@ local
   -> Eff effs a
 local f m = do
   r <- asks f
-  intercept @(Reader r) (\Ask -> pure r) m
+  interpose @(Reader r) (\Ask -> pure r) m
 {-# INLINE local #-}
 
 -- $simpleReaderExample

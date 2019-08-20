@@ -14,7 +14,7 @@ th1 :: Member (Yield Int ()) r => Eff r ()
 th1 = yieldInt 1 >> yieldInt 2
 
 c1 :: Member IO r => Eff r ()
-c1 = runTrace (loop =<< runC th1)
+c1 = runTrace $ runC th1 >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
 {-
@@ -141,8 +141,8 @@ Done
 
 -- And even more
 c7 :: Member IO r => Eff r ()
-c7 = runTrace $
-      runReader (1000::Double) (runReader (10::Int) (loop =<< runC (th client))) 
+c7 = runTrace . runReader (1000::Double) . runReader (10::Int)
+   $ runC (th client) >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >>
                       local (\_->fromIntegral (x+1)::Double) (k ()) >>= loop
        loop (Done _)    = trace "Done"
@@ -182,8 +182,8 @@ Done
 -}
 
 c7' :: Member IO r => Eff r ()
-c7' = runTrace $
-      runReader (1000::Double) (runReader (10::Int) (loop =<< runC (th client)) ) 
+c7' = runTrace . runReader (1000::Double) . runReader (10::Int)
+    $ runC (th client) >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >>
                       local (\_->fromIntegral (x+1)::Double) (k ()) >>= loop
        loop (Done _)   = trace "Done"

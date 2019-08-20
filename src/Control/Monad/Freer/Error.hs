@@ -63,7 +63,7 @@ catchError
   => Eff effs a
   -> (e -> Eff effs a)
   -> Eff effs a
-catchError m handle = interceptRelay pure (\(Error e) _ -> handle e) m
+catchError m handle = interposeRelay pure (\(Error e) _ -> handle e) m
 {-# INLINE catchError #-}
 
 -- | A catcher for Exceptions. Handlers are /not/ allowed to rethrow exceptions.

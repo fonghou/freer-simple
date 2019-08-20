@@ -18,7 +18,6 @@ module Control.Monad.Freer.Coroutine
     -- * Handle Yield Effect
   , Status(..)
   , runC
-  , resumeC
   , interceptC
   ) where
 
@@ -69,4 +68,4 @@ interceptC
   :: Member (Yield a b) effs
   => Eff effs r
   -> Eff effs (Status effs a b r)
-interceptC = interceptRelay (pure . Done) resumeC
+interceptC = interposeRelay (pure . Done) resumeC

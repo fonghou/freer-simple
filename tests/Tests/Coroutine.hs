@@ -44,8 +44,8 @@ runTestCoroutine list = snd . run $ runState 0 effTestCoroutine
           <*> yield () (even :: Int -> Bool)
       unless b $ modify (+ (1 :: Int)) >> testCoroutine
 
-    effTestCoroutine = runC testCoroutine >>= handleStatus list
+    effTestCoroutine = runC testCoroutine >>= loop list
       where
-        handleStatus _      (Done ())       = pure ()
-        handleStatus (i:is) (Continue () k) = k i >>= handleStatus is
-        handleStatus []     _               = pure ()
+        loop _      (Done ())       = pure ()
+        loop (i:is) (Continue () k) = k i >>= loop is
+        loop []     _               = pure ()

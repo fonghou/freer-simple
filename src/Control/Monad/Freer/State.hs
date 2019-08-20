@@ -35,8 +35,8 @@ module Control.Monad.Freer.State
   , execState
 
     -- * State Utilities
-  , transactionState
-  , transactionState'
+  , transactState
+  , transactState'
   ) where
 
 import Data.Proxy (Proxy)
@@ -94,29 +94,29 @@ evalState s = fmap fst . runState s
 {-# INLINE evalState #-}
 
 -- | An encapsulated State handler, for transactional semantics. The global
--- state is updated only if the 'transactionState' finished successfully.
+-- state is updated only if the 'transactState' finished successfully.
 --
 -- GHC cannot infer the @s@ type parameter for this function, so it must be
 -- specified explicitly with @TypeApplications@. Alternatively, it can be
--- specified by supplying a 'Proxy' to 'transactionState''.
-transactionState
+-- specified by supplying a 'Proxy' to 'transactState''.
+transactState
   :: forall s effs a
    . Member (State s) effs
   => Eff effs a
   -> Eff effs a
-transactionState m = do
+transactState m = do
     s0 <- get @s
-    (x, s) <- interceptS stateNat s0 m
+    (x, s) <- interposeState stateNat s0 m
     put s
     pure x
 
--- | Like 'transactionState', but @s@ is specified by providing a 'Proxy'
+-- | Like 'transactState', but @s@ is specified by providing a 'Proxy'
 -- instead of requiring @TypeApplications@.
-transactionState'
+transactState'
   :: forall s effs a
    . Member (State s) effs
   => Proxy s
   -> Eff effs a
   -> Eff effs a
-transactionState' _ = transactionState @s
-{-# INLINE transactionState' #-}
+transactState' _ = transactState @s
+{-# INLINE transactState' #-}
