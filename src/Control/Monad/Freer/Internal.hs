@@ -52,13 +52,8 @@ module Control.Monad.Freer.Internal
     -- * Handling Effects
   , run
   , runM
-
-    -- ** Nondeterminism Effect
-  , NonDet(..)
   ) where
 
-import Control.Applicative (Alternative(..))
-import Control.Monad (MonadPlus(..))
 import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Morph (MFunctor (..))
@@ -206,20 +201,3 @@ usingFreer k m = runFreer m k
 raise :: Eff effs a -> Eff (e ': effs) a
 raise = hoistEff weaken
 {-# INLINE raise #-}
-
---------------------------------------------------------------------------------
-                    -- Nondeterministic Choice --
---------------------------------------------------------------------------------
-
--- | A data type for representing nondeterminstic choice.
-data NonDet a where
-  MZero :: NonDet a
-  MPlus :: NonDet Bool
-
-instance Member NonDet effs => Alternative (Eff effs) where
-  empty = mzero
-  (<|>) = mplus
-
-instance Member NonDet effs => MonadPlus (Eff effs) where
-  mzero       = send MZero
-  mplus m1 m2 = send MPlus >>= \x -> if x then m1 else m2
