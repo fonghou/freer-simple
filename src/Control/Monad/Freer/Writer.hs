@@ -36,3 +36,8 @@ tell w = send (Tell w)
 runWriter :: forall w effs a. Monoid w
           => Eff (Writer w ': effs) a -> Eff effs (a, w)
 runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
+
+-- listen :: (Member (Writer o) effs) => Eff effs a -> Eff effs (a, w)
+-- listen = listen id
+--
+-- listens = undefined

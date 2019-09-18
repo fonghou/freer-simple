@@ -2,6 +2,7 @@
 module Control.Monad.Freer.Output
   ( Output(..)
   , output
+  , outputToWriter
   , runOutputList
   , runOutputMonoid
   , runOutputMonoidAssocR
@@ -11,6 +12,7 @@ import Data.Semigroup (Endo(..))
 import Data.Bifunctor (second)
 import Control.Monad.Freer.Internal (Eff, Member, send)
 import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer.Writer
 import Control.Monad.Trans.State.Strict (modify')
 
 data Output o a where
@@ -63,3 +65,8 @@ runOutputEff act = interpret $ \case
     Output o -> act o
 {-# INLINE runOutputEff #-}
 
+-- | Transform an 'Output' effect into a 'Writer' effect.
+outputToWriter :: Member (Writer o) effs => Eff (Output o ': effs) a -> Eff effs a
+outputToWriter = interpret $ \case
+  Output o -> tell o
+{-# INLINE outputToWriter #-}
