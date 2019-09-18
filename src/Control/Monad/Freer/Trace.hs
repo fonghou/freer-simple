@@ -40,7 +40,7 @@ runTrace = subsume @IO $ \(Trace s) -> putStrLn s
 
 ------------------------------------------------------------------------------
 -- | Run a 'Trace' effect by ignoring all of its messages.
-ignoreTrace :: Eff (Trace ': r) ~> Eff r
+ignoreTrace :: Eff (Trace ': effs) ~> Eff effs
 ignoreTrace = interpret $ \case
   Trace _ -> pure ()
 {-# INLINE ignoreTrace #-}
@@ -48,8 +48,8 @@ ignoreTrace = interpret $ \case
 ------------------------------------------------------------------------------
 -- | Transform a 'Trace' effect into a 'Output' 'String' effect.
 traceToOutput
-    :: Member (Output String) r
-    => Eff (Trace ': r) ~> Eff r
+    :: Member (Output String) effs
+    => Eff (Trace ': effs) ~> Eff effs
 traceToOutput = interpret $ \case
   Trace m -> output m
 {-# INLINE traceToOutput #-}
@@ -57,9 +57,9 @@ traceToOutput = interpret $ \case
 ------------------------------------------------------------------------------
 -- | Transform an 'Output' 'String' effect into a 'Trace' effect.
 outputToTrace
-    :: (Show w , Member Trace r)
-    => Eff (Output w ': r) ~> Eff r
+    :: (Show o , Member Trace effs)
+    => Eff (Output o ': effs) ~> Eff effs
 outputToTrace = interpret $ \case
-  Output m -> trace $ show m
+  Output o -> trace $ show o
 {-# INLINE outputToTrace #-}
 

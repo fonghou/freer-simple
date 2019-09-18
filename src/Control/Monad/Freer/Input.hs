@@ -18,14 +18,14 @@ input :: forall i effs . (Member (Input i) effs) => Eff effs i
 input = send Input
 {-# INLINE input #-}
 
-runInputConst :: i -> Eff (Input i ': r) a -> Eff r a
+runInputConst :: i -> Eff (Input i ': effs) a -> Eff effs a
 runInputConst c = interpret $ \case
   Input -> pure c
 {-# INLINE runInputConst #-}
 
 ------------------------------------------------------------------------------
 -- | Runs an 'Input' effect by evaluating a monadic action for each request.
-runInputEff :: forall i r a. Eff r i -> Eff (Input i ': r) a -> Eff r a
+runInputEff :: forall i effs a. Eff effs i -> Eff (Input i ': effs) a -> Eff effs a
 runInputEff m = interpret $ \case
   Input -> m
 {-# INLINE runInputEff #-}
@@ -35,8 +35,8 @@ runInputEff m = interpret $ \case
 -- time. Returns 'Nothing' after the list is exhausted.
 runInputList
     :: [i]
-    -> Eff (Input (Maybe i) ': r) a
-    -> Eff r a
+    -> Eff (Input (Maybe i) ': effs) a
+    -> Eff effs a
 runInputList is = fmap fst . runState is . interpret
   (\case
       Input -> do

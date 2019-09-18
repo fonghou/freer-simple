@@ -20,7 +20,7 @@ output :: forall o effs. Member (Output o) effs => o -> Eff effs ()
 output = send . Output
 {-# INLINE output #-}
 
-runOutputList :: forall o r a.  Eff (Output o ': r) a -> Eff r (a, [o])
+runOutputList :: forall o effs a.  Eff (Output o ': effs) a -> Eff effs (a, [o])
 runOutputList = (fmap . fmap ) (second reverse)
   $ withStateful [] $ \(Output o) -> modify' (o :)
 {-# INLINE runOutputList #-}
@@ -28,10 +28,10 @@ runOutputList = (fmap . fmap ) (second reverse)
 ------------------------------------------------------------------------------
 -- | Run an 'Output' effect by transforming it into a monoid.
 runOutputMonoid
-    :: forall o m r a . Monoid m
+    :: forall o m effs a . Monoid m
     => (o -> m)
-    -> Eff (Output o ': r) a
-    -> Eff r (a, m)
+    -> Eff (Output o ': effs) a
+    -> Eff effs (a, m)
 runOutputMonoid f = withStateful mempty $ \(Output o) -> modify' (<> f o)
 {-# INLINE runOutputMonoid #-}
 
@@ -44,11 +44,11 @@ runOutputMonoid f = withStateful mempty $ \(Output o) -> modify' (<> f o)
 -- You should always use this instead of 'runOutputMonoid' if the monoid
 -- is a list, such as 'String'.
 runOutputMonoidAssocR
-    :: forall o m r a
+    :: forall o m effs a
      . Monoid m
     => (o -> m)
-    -> Eff (Output o ': r) a
-    -> Eff r (a, m)
+    -> Eff (Output o ': effs) a
+    -> Eff effs (a, m)
 runOutputMonoidAssocR f =
     fmap (second (`appEndo` mempty))
   . runOutputMonoid (\o -> let !o' = f o in Endo (o' <>))
@@ -58,7 +58,7 @@ runOutputMonoidAssocR f =
 ------------------------------------------------------------------------------
 -- | Runs an 'Output' effect by running a monadic action for each of its
 -- values.
-runOutputEff :: (o -> Eff r ()) -> Eff (Output o ': r) a -> Eff r a
+runOutputEff :: (o -> Eff effs ()) -> Eff (Output o ': effs) a -> Eff effs a
 runOutputEff act = interpret $ \case
     Output o -> act o
 {-# INLINE runOutputEff #-}
