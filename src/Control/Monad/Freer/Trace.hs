@@ -16,10 +16,13 @@ module Control.Monad.Freer.Trace
   , trace
   , runTrace
   , ignoreTrace
+  , traceToOutput
+  , outputToTrace
   ) where
 
 import Control.Monad.Freer.Internal (Eff, Member, send, type (~>))
 import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer.Output
 
 -- | A Trace effect; takes a 'String' and performs output.
 data Trace a where
@@ -28,23 +31,35 @@ data Trace a where
 -- | Printing a string in a trace.
 trace :: Member Trace effs => String -> Eff effs ()
 trace = send . Trace
+{-# INLINE trace #-}
 
 -- | An 'IO' handler for 'Trace' effects.
 runTrace :: Member IO r => Eff (Trace ': r) ~> Eff r
 runTrace = subsume @IO $ \(Trace s) -> putStrLn s
-
--- | Get the result of a 'Trace' effect as a list of 'String's.
--- runTraceList :: Eff (Trace ': r) a -> Eff r (a, [String])
--- runTraceList = runWriter . reinterpret
---   (\case
---      Trace o -> tell o)
--- {-# INLINE runTraceList #-}
+{-# INLINE runTrace #-}
 
 ------------------------------------------------------------------------------
 -- | Run a 'Trace' effect by ignoring all of its messages.
---
--- @since 1.0.0.0
 ignoreTrace :: Eff (Trace ': r) ~> Eff r
 ignoreTrace = interpret $ \case
   Trace _ -> pure ()
 {-# INLINE ignoreTrace #-}
+
+------------------------------------------------------------------------------
+-- | Transform a 'Trace' effect into a 'Output' 'String' effect.
+traceToOutput
+    :: Member (Output String) r
+    => Eff (Trace ': r) ~> Eff r
+traceToOutput = interpret $ \case
+  Trace m -> output m
+{-# INLINE traceToOutput #-}
+
+------------------------------------------------------------------------------
+-- | Transform an 'Output' 'String' effect into a 'Trace' effect.
+outputToTrace
+    :: (Show w , Member Trace r)
+    => Eff (Output w ': r) ~> Eff r
+outputToTrace = interpret $ \case
+  Output m -> trace $ show m
+{-# INLINE outputToTrace #-}
+

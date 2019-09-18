@@ -11,7 +11,7 @@ import Text.Show (Show(show))
 
 import Control.Monad.Freer (Eff, Member, runM)
 import Control.Monad.Freer.Reader (ask, runReader)
-import Control.Monad.Freer.Trace (Trace, runTrace, trace)
+import Control.Monad.Freer.Trace
 
 
 -- Higher-order effectful function
