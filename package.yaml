@@ -62,6 +62,7 @@ library:
   - transformers
   - mmorph
   - resourcet
+  - random
 
 executables:
   freer-examples:
