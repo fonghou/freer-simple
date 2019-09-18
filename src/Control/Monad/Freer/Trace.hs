@@ -34,7 +34,7 @@ trace = send . Trace
 {-# INLINE trace #-}
 
 -- | An 'IO' handler for 'Trace' effects.
-runTrace :: Member IO r => Eff (Trace ': r) ~> Eff r
+runTrace :: Member IO effs => Eff (Trace ': effs) ~> Eff effs
 runTrace = subsume @IO $ \(Trace s) -> putStrLn s
 {-# INLINE runTrace #-}
 
