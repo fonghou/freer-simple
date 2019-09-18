@@ -27,6 +27,7 @@ module Control.Monad.Freer.State
   , get
   , put
   , modify
+  , modify'
   , gets
 
     -- * State Handlers
@@ -63,8 +64,19 @@ put s = send (Put s)
 -- | Modify the current state of type @s :: *@ using provided function
 -- @(s -> s)@.
 modify :: forall s effs. Member (State s) effs => (s -> s) -> Eff effs ()
-modify f = fmap f get >>= put
+modify f = do
+  s <- get
+  put $ f s
 {-# INLINE modify #-}
+
+------------------------------------------------------------------------------
+-- | A variant of 'modify' in which the computation is strict in the
+-- new state.
+modify' :: forall s effs. Member (State s) effs => (s -> s) -> Eff effs ()
+modify' f = do
+  s <- get
+  put $! f s
+{-# INLINABLE modify' #-}
 
 -- | Retrieve a specific component of the current state using the provided
 -- projection function.

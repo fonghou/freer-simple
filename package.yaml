@@ -33,6 +33,7 @@ ghc-options:
 - -Wincomplete-record-updates
 - -Wincomplete-uni-patterns
 - -Wredundant-constraints
+- -fhide-source-paths
 
 default-extensions:
 - ConstraintKinds

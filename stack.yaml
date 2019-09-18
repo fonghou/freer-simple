@@ -9,3 +9,6 @@ extra-deps:
 flags: {}
 extra-package-dbs: []
 allow-newer: true
+
+ghc-options:
+  "$locals": -fhide-source-paths

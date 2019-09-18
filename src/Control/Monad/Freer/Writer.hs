@@ -22,7 +22,7 @@ import Data.Monoid ((<>))
 
 import Control.Monad.Freer.Internal (Eff, Member, send)
 import Control.Monad.Freer.Interpretation
-import Control.Monad.Trans.State.Strict (modify)
+import Control.Monad.Trans.State.Strict (modify')
 
 -- | Writer effects - send outputs to an effect environment.
 data Writer w r where
@@ -33,5 +33,6 @@ tell :: forall w effs. Member (Writer w) effs => w -> Eff effs ()
 tell w = send (Tell w)
 
 -- | Simple handler for 'Writer' effects.
-runWriter :: forall w effs a. Monoid w => Eff (Writer w ': effs) a -> Eff effs (a, w)
-runWriter = withStateful mempty $ \(Tell w) -> modify (<> w)
+runWriter :: forall w effs a. Monoid w
+          => Eff (Writer w ': effs) a -> Eff effs (a, w)
+runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)

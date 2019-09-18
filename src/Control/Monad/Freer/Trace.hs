@@ -15,6 +15,7 @@ module Control.Monad.Freer.Trace
   ( Trace(..)
   , trace
   , runTrace
+  , ignoreTrace
   ) where
 
 import Control.Monad.Freer.Internal (Eff, Member, send, type (~>))
@@ -32,3 +33,18 @@ trace = send . Trace
 runTrace :: Member IO r => Eff (Trace ': r) ~> Eff r
 runTrace = subsume @IO $ \(Trace s) -> putStrLn s
 
+-- | Get the result of a 'Trace' effect as a list of 'String's.
+-- runTraceList :: Eff (Trace ': r) a -> Eff r (a, [String])
+-- runTraceList = runWriter . reinterpret
+--   (\case
+--      Trace o -> tell o)
+-- {-# INLINE runTraceList #-}
+
+------------------------------------------------------------------------------
+-- | Run a 'Trace' effect by ignoring all of its messages.
+--
+-- @since 1.0.0.0
+ignoreTrace :: Eff (Trace ': r) ~> Eff r
+ignoreTrace = interpret $ \case
+  Trace _ -> pure ()
+{-# INLINE ignoreTrace #-}
