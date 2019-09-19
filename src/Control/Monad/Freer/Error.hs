@@ -49,15 +49,6 @@ runError :: forall e effs a. Eff (Error e ': effs) a -> Eff effs (Either e a)
 runError = shortCircuit $ \(Error e) -> E.throwE e
 {-# INLINE runError #-}
 
--- | Transform one 'Error' into another. This function can be used to aggregate
--- multiple errors into a single type.
-mapError :: forall e1 e2 r a. Member (Error e2) r
-         => (e1 -> e2) -> Eff (Error e1 ': r) a -> Eff r a
-mapError f m = do
-  e1 <- runError m
-  fromEither (first f e1)
-{-# INLINE mapError #-}
-
 -- | A catcher for Exceptions. Handlers are allowed to rethrow exceptions.
 catchError :: forall e effs a . Member (Error e) effs
            => Eff effs a -> (e -> Eff effs a) -> Eff effs a
@@ -73,6 +64,21 @@ handleError
 handleError m handle = relay pure (\(Error e) _ -> handle e) m
 {-# INLINE handleError #-}
 
+-- | Transform one 'Error' into another. This function can be used to aggregate
+-- multiple errors into a single type.
+mapError :: forall e1 e2 r a. Member (Error e2) r
+         => (e1 -> e2) -> Eff (Error e1 ': r) a -> Eff r a
+mapError f m = do
+  e1 <- runError m
+  fromEither (first f e1)
+{-# INLINE mapError #-}
+
+-- | Run an 'Error' effect as an 'IO' 'X.Exception' through final 'IO'. This
+-- interpretation is significantly faster than 'runError'.
+--
+-- /Beware/: Effects that aren't interpreted in terms of 'IO'
+-- will have local state semantics in regards to 'Error' effects
+-- interpreted this way.
 runErrorInIO :: LastMember IO effs
              => Eff (Error e ': effs) a -> Eff effs (Either e a)
 runErrorInIO = undefined
