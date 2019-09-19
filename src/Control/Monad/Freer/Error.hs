@@ -21,7 +21,7 @@ module Control.Monad.Freer.Error
   , handleError
   ) where
 
-import Control.Monad.Freer (Eff, Member, send)
+import Control.Monad.Freer (Eff, Member, LastMember, send)
 import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.Except as E
 import Data.Bifunctor (first)
@@ -31,12 +31,14 @@ newtype Error e r where
   Error :: e -> Error e r
 
 -- | Throws an error carrying information of type @e :: *@.
-throwError :: forall e effs a. Member (Error e) effs => e -> Eff effs a
+throwError :: forall e effs a. Member (Error e) effs 
+           => e -> Eff effs a
 throwError e = send (Error e)
 {-# INLINE throwError #-}
 
 -- | Upgrade an 'Either' into an 'Error' effect.
-fromEither :: forall e effs a.Member (Error e) effs => Either e a -> Eff effs a
+fromEither :: forall e effs a.Member (Error e) effs 
+           => Either e a -> Eff effs a
 fromEither (Left e) = throwError e
 fromEither (Right a) = pure a
 
@@ -57,12 +59,8 @@ mapError f m = do
 {-# INLINE mapError #-}
 
 -- | A catcher for Exceptions. Handlers are allowed to rethrow exceptions.
-catchError
-  :: forall e effs a
-   . Member (Error e) effs
-  => Eff effs a
-  -> (e -> Eff effs a)
-  -> Eff effs a
+catchError :: forall e effs a . Member (Error e) effs
+           => Eff effs a -> (e -> Eff effs a) -> Eff effs a
 catchError m handle = interposeRelay pure (\(Error e) _ -> handle e) m
 {-# INLINE catchError #-}
 
@@ -74,3 +72,7 @@ handleError
   -> Eff effs a
 handleError m handle = relay pure (\(Error e) _ -> handle e) m
 {-# INLINE handleError #-}
+
+runErrorInIO :: LastMember IO effs
+             => Eff (Error e ': effs) a -> Eff effs (Either e a)
+runErrorInIO = undefined

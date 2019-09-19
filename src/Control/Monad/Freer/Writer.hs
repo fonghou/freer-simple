@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 -- |
 -- Module:       Control.Monad.Freer.Writer
 -- Description:  Composable Writer effects.
@@ -15,6 +16,10 @@
 module Control.Monad.Freer.Writer
   ( Writer(..)
   , tell
+  , listen
+  , listens
+  , pass
+  , censor
   , runWriter
   ) where
 
@@ -37,7 +42,18 @@ runWriter :: forall w effs a. Monoid w
           => Eff (Writer w ': effs) a -> Eff effs (a, w)
 runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
 
--- listen :: (Member (Writer o) effs) => Eff effs a -> Eff effs (a, w)
--- listen = listen id
---
--- listens = undefined
+listens :: Member (Writer w) effs
+        => (w -> b) -> Eff effs a -> Eff effs (a, b)
+listens f = undefined
+
+listen :: Member (Writer w) effs
+       => Eff effs a -> Eff effs (a, w)
+listen = listens id
+
+pass :: Member (Writer w) effs
+     => Eff effs (a, w -> w) -> Eff effs a
+pass = undefined
+
+censor :: Member (Writer w) effs
+       => (w -> w) -> Eff effs a -> Eff effs a
+censor f m = pass (fmap (, f) m)
