@@ -10,12 +10,11 @@ module Control.Monad.Freer.Output
 
 import Data.Semigroup (Endo(..))
 import Data.Bifunctor (second)
-import Control.Monad.Freer.Internal (Eff, Member, send)
-import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer
+import Control.Monad.Freer.State
 import Control.Monad.Freer.Writer
-import Control.Monad.Trans.State.Strict (modify')
 
-data Output o a where
+data Output o r where
   Output :: o -> Output o ()
 
 output :: forall o effs. Member (Output o) effs => o -> Eff effs ()
@@ -23,8 +22,11 @@ output = send . Output
 {-# INLINE output #-}
 
 runOutputList :: forall o effs a.  Eff (Output o ': effs) a -> Eff effs (a, [o])
-runOutputList = (fmap . fmap ) (second reverse)
-  $ withStateful [] $ \(Output o) -> modify' (o :)
+runOutputList =
+  fmap (second reverse)
+  . runState []
+  . interpret (\case Output o -> modify' (o :))
+  . introduce
 {-# INLINE runOutputList #-}
 
 ------------------------------------------------------------------------------
@@ -34,7 +36,10 @@ runOutputMonoid
     => (o -> m)
     -> Eff (Output o ': effs) a
     -> Eff effs (a, m)
-runOutputMonoid f = withStateful mempty $ \(Output o) -> modify' (<> f o)
+runOutputMonoid f =
+  runState mempty
+  . interpret (\case Output o -> modify' (`mappend` f o))
+  . introduce
 {-# INLINE runOutputMonoid #-}
 
 ------------------------------------------------------------------------------

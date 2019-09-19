@@ -62,4 +62,3 @@ outputToTrace
 outputToTrace = interpret $ \case
   Output o -> trace $ show o
 {-# INLINE outputToTrace #-}
-

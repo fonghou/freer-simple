@@ -26,7 +26,7 @@ module Control.Monad.Freer.Writer
 import Data.Monoid ((<>))
 
 import Control.Monad.Freer.Internal (Eff, Member, send)
-import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer.Interpretation (withStateful)
 import Control.Monad.Trans.State.Strict (modify')
 
 -- | Writer effects - send outputs to an effect environment.
