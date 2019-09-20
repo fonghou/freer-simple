@@ -14,26 +14,33 @@ test1 :: (Members [Input Int, Output String, Error String, Trace] m)
       => Eff m ()
 test1 = do
   trace "debug"
+  i <- input @Int
   output "hello"
+  output $ show i
   throwError "DIE"
+  trace "end"
 
-run1 :: IO ((), [String])
+run1 :: IO _
 run1 = test1
   & runInputConst @Int 1
-  & runOutputList @String
   & unsafeThrowError @String
+  & outputToTrace @String
   & runTrace
   & runM
 
-run1' :: IO ((), [String])
+run1' :: IO _
 run1' = catchAny run1 $ \s -> do
-  return ((), [ (show s) ])
+  print s
 
-run2 :: IO ( Either String ((), [String]) )
-run2 = test1
+test2 :: (Members [Input Int, Output String, Trace] m)
+      => Eff m ()
+test2 = handleError @String test1 $ \e -> output e
+
+run2 :: IO _
+run2 = test2
   & runInputConst @Int 1
-  & runOutputList @String
   & runError @String
-  & unsafeThrowError @String
+  & runOutputList @String
   & runTrace
+  & unsafeThrowError @String
   & runM
