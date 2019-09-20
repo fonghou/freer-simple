@@ -23,6 +23,7 @@ import Console
 import Coroutine ()
 import Fresh ()
 import Trace ()
+import Error ()
 
 -------------------------------------------------------------------------------
 -- Example

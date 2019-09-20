@@ -13,18 +13,22 @@
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Error
   ( Error(..)
+  , WrappedError(..)
   , throwError
   , fromEither
   , runError
   , mapError
   , catchError
   , handleError
+  , unsafeThrowError
   ) where
 
+import qualified Control.Exception as X
 import Control.Monad.Freer (Eff, Member, LastMember, send)
 import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.Except as E
 import Data.Bifunctor (first)
+import Data.Typeable
 
 -- | Exceptions of the type @e :: *@ with no resumption.
 newtype Error e r where
@@ -73,12 +77,22 @@ mapError f m = do
   fromEither (first f e1)
 {-# INLINE mapError #-}
 
+
+newtype WrappedError e = WrappedError e
+  deriving (Typeable)
+
+instance Typeable e => Show (WrappedError e) where
+  show = mappend "WrappedExc: " . show . typeRep
+
+instance (Typeable e) => X.Exception (WrappedError e)
+
 -- | Run an 'Error' effect as an 'IO' 'X.Exception' through final 'IO'. This
 -- interpretation is significantly faster than 'runError'.
 --
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-runErrorInIO :: LastMember IO effs
-             => Eff (Error e ': effs) a -> Eff effs (Either e a)
-runErrorInIO = undefined
+unsafeThrowError :: (Typeable e, LastMember IO effs)
+             => Eff (Error e ': effs) a -> Eff effs a
+unsafeThrowError = subsume @IO $ \case
+  (Error e) -> X.throwIO $ WrappedError e
