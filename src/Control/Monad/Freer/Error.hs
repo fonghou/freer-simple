@@ -24,7 +24,7 @@ module Control.Monad.Freer.Error
   ) where
 
 import qualified Control.Exception as X
-import Control.Monad.Freer (Eff, Member, LastMember, send)
+import Control.Monad.Freer (Eff, Member, send)
 import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.Except as E
 import Data.Bifunctor (first)
@@ -92,7 +92,7 @@ instance (Typeable e) => X.Exception (WrappedError e)
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-unsafeThrowError :: (Typeable e, LastMember IO effs)
+unsafeThrowError :: (Typeable e, Member IO effs)
              => Eff (Error e ': effs) a -> Eff effs a
 unsafeThrowError = subsume @IO $ \case
   (Error e) -> X.throwIO $ WrappedError e

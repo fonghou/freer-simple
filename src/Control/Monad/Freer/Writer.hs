@@ -25,7 +25,7 @@ module Control.Monad.Freer.Writer
 
 import Data.Monoid ((<>))
 
-import Control.Monad.Freer.Internal (Eff, Member, send)
+import Control.Monad.Freer.Internal (Eff, Member, send, raise)
 import Control.Monad.Freer.Interpretation (withStateful)
 import Control.Monad.Trans.State.Strict (modify')
 
@@ -43,28 +43,28 @@ runWriter :: forall w effs a. Monoid w
           => Eff (Writer w ': effs) a -> Eff effs (a, w)
 runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
 
-listens :: forall w effs a b. Monoid w
+listens :: forall w effs a b. (Monoid w, Member (Writer w) effs)
         => (w -> b) -> Eff (Writer w ': effs) a -> Eff effs (a, b)
 listens f m = do
-  (a, w) <- runWriter m -- should be interposeRelay
-  -- tell w
+  (a, w) <- runWriter m -- use interpose?
+  tell w
   return (a, f w)
 {-# INLINE listens #-}
 
-listen :: forall w effs a. Monoid w
+listen :: forall w effs a. (Monoid w, Member (Writer w) effs)
        => Eff (Writer w ': effs) a -> Eff effs (a, w)
 listen = listens id
 {-# INLINE listen #-}
 
-pass :: forall w effs a. Monoid w
+pass :: forall w effs a. (Monoid w, Member (Writer w) effs)
      => Eff (Writer w ': effs) (a, w -> w) -> Eff effs a
 pass m = do
-  ((a, f), w) <- runWriter m -- should be interposeRelay
-   -- tell $ f w
+  ((a, f), w) <- runWriter m -- interpose?
+  tell $ f w
   return a
 {-# INLINE pass #-}
 
-censor :: forall w effs a. Monoid w
+censor :: forall w effs a.(Monoid w, Member (Writer w) effs)
        => (w -> w) -> Eff (Writer w ': effs) a -> Eff effs a
 censor f m = pass (fmap (, f) m)
 {-# INLINE censor #-}
