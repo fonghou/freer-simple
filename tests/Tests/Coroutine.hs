@@ -34,7 +34,7 @@ countOddDuoPrefix list = count list 0
     count _          n = n
 
 runTestCoroutine :: [Int] -> Int
-runTestCoroutine list = snd . run $ runState 0 effTestCoroutine
+runTestCoroutine list = fst . run $ runState 0 effTestCoroutine
   where
     testCoroutine :: Members '[Yield () Int, State Int] r => Eff r ()
     testCoroutine = do

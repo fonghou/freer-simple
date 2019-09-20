@@ -14,13 +14,13 @@ tests = testGroup "Exception Eff tests"
   [ testProperty "Error takes precedence"
       $ \x y -> testExceptionTakesPriority x y == Left y
   , testCase "uncaught: runState (runError t)"
-      $ ter1 @?= (Left "exc", 2)
+      $ ter1 @?= (2, Left "exc")
   , testCase "uncaught: runError (runState t)"
       $ ter2 @?= Left "exc"
   , testCase "caught: runState (runError t)"
-      $ ter3 @?= (Right "exc", 2)
+      $ ter3 @?= (2, Right "exc")
   , testCase "caught: runError (runState t)"
-      $ ter4 @?= Right ("exc", 2)
+      $ ter4 @?= Right (2, "exc")
   , testCase "success: runReader (runErrBig t)"
       $ ex2rr @?= Right 5
   , testCase "uncaught: runReader (runErrBig t)"
@@ -48,19 +48,19 @@ incr = get >>= put . (+ (1 :: Int))
 tes1 :: (Members '[State Int, Error String] r) => Eff r b
 tes1 = incr >> throwError "exc"
 
-ter1 :: (Either String Int, Int)
+ter1 :: (Int, Either String Int)
 ter1 = run $ runState (1 :: Int) (runError tes1)
 
-ter2 :: Either String (String, Int)
+ter2 :: Either String (Int, String)
 ter2 = run $ runError (runState (1 :: Int) tes1)
 
 teCatch :: Member (Error String) r => Eff r a -> Eff r String
 teCatch m = (m >> pure "done") `catchError` \e -> pure (e :: String)
 
-ter3 :: (Either String String, Int)
+ter3 :: (Int, Either String String)
 ter3 = run $ runState (1 :: Int) (runError (teCatch tes1))
 
-ter4 :: Either String (String, Int)
+ter4 :: Either String (Int, String)
 ter4 = run $ runError (runState (1 :: Int) (teCatch tes1))
 
 -- | The example from the paper.

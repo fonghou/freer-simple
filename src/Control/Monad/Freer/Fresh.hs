@@ -33,10 +33,10 @@ fresh = send Fresh
 
 -- | Handler for 'Fresh' effects, with an 'Int' for a starting value. The
 -- return value includes the next fresh value.
-runFresh :: Int -> Eff (Fresh ': effs) a -> Eff effs (a, Int)
+runFresh :: Int -> Eff (Fresh ': effs) a -> Eff effs (Int, a)
 runFresh = stateful $ \Fresh -> S.get <* S.modify (+1)
 
 -- | Handler for 'Fresh' effects, with an 'Int' for a starting value. Discards
 -- the next fresh value.
 evalFresh :: Int -> Eff (Fresh ': effs) a -> Eff effs a
-evalFresh s = fmap fst . runFresh s
+evalFresh s = fmap snd . runFresh s

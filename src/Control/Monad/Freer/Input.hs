@@ -37,7 +37,7 @@ runInputList
     :: [i]
     -> Eff (Input (Maybe i) ': effs) a
     -> Eff effs a
-runInputList is = fmap fst . runState is . interpret
+runInputList is = fmap snd . runState is . interpret
   (\case
       Input -> do
         s <- gets uncons

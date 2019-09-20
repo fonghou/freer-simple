@@ -85,7 +85,8 @@ gets f = f <$> get
 {-# INLINE gets #-}
 
 -- | Handler for 'State' effects.
-runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (a, s)
+-- NB: returns (s, a), swapped from MTL State
+runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (s, a)
 runState = stateful stateNat
 {-# INLINE runState #-}
 
@@ -97,12 +98,12 @@ stateNat = \case
 
 -- | Run a 'State' effect, returning only the final state.
 execState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs s
-execState s = fmap snd . runState s
+execState s = fmap fst . runState s
 {-# INLINE execState #-}
 
 -- | Run a State effect, discarding the final state.
 evalState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs a
-evalState s = fmap fst . runState s
+evalState s = fmap snd . runState s
 {-# INLINE evalState #-}
 
 -- | An encapsulated State handler, for transactional semantics. The global

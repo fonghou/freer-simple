@@ -9,7 +9,7 @@ module Control.Monad.Freer.Output
   , runOutputEff) where
 
 import Data.Semigroup (Endo(..))
-import Data.Bifunctor (second)
+import Data.Bifunctor (first)
 import Control.Monad.Freer
 import Control.Monad.Freer.State
 import Control.Monad.Freer.Writer
@@ -21,9 +21,9 @@ output :: forall o effs. Member (Output o) effs => o -> Eff effs ()
 output = send . Output
 {-# INLINE output #-}
 
-runOutputList :: forall o effs a.  Eff (Output o ': effs) a -> Eff effs (a, [o])
+runOutputList :: forall o effs a.  Eff (Output o ': effs) a -> Eff effs ([o], a)
 runOutputList =
-  fmap (second reverse)
+  fmap (first reverse)
   . runState []
   . reinterpret (\case Output o -> modify' (o :))
 {-# INLINE runOutputList #-}
@@ -34,7 +34,7 @@ runOutputMonoid
     :: forall o m effs a . Monoid m
     => (o -> m)
     -> Eff (Output o ': effs) a
-    -> Eff effs (a, m)
+    -> Eff effs (m, a)
 runOutputMonoid f =
   runState mempty
   . reinterpret (\case Output o -> modify' (<> f o))
@@ -53,9 +53,9 @@ runOutputMonoidAssocR
      . Monoid m
     => (o -> m)
     -> Eff (Output o ': effs) a
-    -> Eff effs (a, m)
+    -> Eff effs (m, a)
 runOutputMonoidAssocR f =
-    fmap (second (`appEndo` mempty))
+    fmap (first (`appEndo` mempty))
   . runOutputMonoid (\o -> let !o' = f o in Endo (o' <>))
 {-# INLINE runOutputMonoidAssocR #-}
 

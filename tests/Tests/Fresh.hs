@@ -18,7 +18,7 @@ tests = testGroup "Fresh tests"
   ]
 
 makeFresh :: Int -> Eff r Int
-makeFresh n = fst <$> runFresh 0 (last <$> replicateM n fresh)
+makeFresh n = snd <$> runFresh 0 (last <$> replicateM n fresh)
 
 testFresh :: Int -> Int
 testFresh = run . makeFresh

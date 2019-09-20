@@ -9,6 +9,8 @@
 
 module Control.Monad.Freer.Interpretation where
 
+import Data.Tuple (swap)
+
 import           Control.Monad.Morph (MFunctor (..))
 import           Control.Monad.Trans.Class (MonadTrans (..))
 import           Control.Monad.Trans.Cont
@@ -42,11 +44,11 @@ interpret f (Freer m) = Freer $ \k -> m $ \u ->
 stateful
     :: (eff ~> S.StateT s (Eff r))
     -> s
-    -> Eff (eff ': r) a -> Eff r (a, s)
-stateful f s (Freer m) = Freer $ \k -> flip S.runStateT s $ m $ \u ->
-  case decomp u of
-    Left  x -> lift $ k x
-    Right y -> hoist (usingFreer k) $ f y
+    -> Eff (eff ': r) a -> Eff r (s, a)
+stateful f s (Freer m) = (fmap ) swap $ Freer $ \k -> flip S.runStateT s $ m $ \u ->
+    case decomp u of
+      Left  x -> lift $ k x
+      Right y -> hoist (usingFreer k) $ f y
 {-# INLINE stateful #-}
 -- NB: @stateful f s = transform (flip S.runStateT s) f@, but is not
 -- implemented as such, since 'transform' is available only >= 8.6.0
@@ -57,7 +59,7 @@ stateful f s (Freer m) = Freer $ \k -> flip S.runStateT s $ m $ \u ->
 withStateful
     :: s
     -> (eff ~> S.StateT s (Eff r))
-    -> Eff (eff ': r) a -> Eff r (a, s)
+    -> Eff (eff ': r) a -> Eff r (s, a)
 withStateful s f = stateful f s
 {-# INLINE withStateful #-}
 
