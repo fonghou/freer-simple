@@ -46,7 +46,7 @@ runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
 listens :: forall w effs a b. Monoid w
         => (w -> b) -> Eff (Writer w ': effs) a -> Eff effs (a, b)
 listens f m = do
-  (a, w) <- runWriter m -- should be interpose
+  (a, w) <- runWriter m -- should be interposeRelay
   -- tell w
   return (a, f w)
 {-# INLINE listens #-}
@@ -59,10 +59,9 @@ listen = listens id
 pass :: forall w effs a. Monoid w
      => Eff (Writer w ': effs) (a, w -> w) -> Eff effs a
 pass m = do
-  ((a, f), w) <- runWriter m -- should be interpose
+  ((a, f), w) <- runWriter m -- should be interposeRelay
    -- tell $ f w
   return a
-
 {-# INLINE pass #-}
 
 censor :: forall w effs a. Monoid w
