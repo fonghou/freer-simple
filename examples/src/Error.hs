@@ -4,6 +4,7 @@ module Error where
 import Control.Exception.Safe
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
+import Control.Monad.Freer.Fail
 import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
 -- import Control.Monad.Freer.State
@@ -44,3 +45,8 @@ run2 = test2
   & runTrace
   & unsafeRunError @String
   & runM
+
+testFail :: Member Fail r => Maybe Bool -> Eff r Bool
+testFail mb = do
+  Just b <- pure mb
+  pure b

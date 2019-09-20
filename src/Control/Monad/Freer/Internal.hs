@@ -56,10 +56,14 @@ module Control.Monad.Freer.Internal
     -- * Handling Effects
   , run
   , runM
+
+    -- * MonadFail
+  , Fail (..)
   ) where
 
 import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Fail
 import Control.Monad.Morph (MFunctor (..))
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Natural (type (~>))
@@ -135,6 +139,13 @@ instance MonadTrans Freer where
 
 instance MFunctor Freer where
   hoist = hoistEff
+
+
+newtype Fail a = Fail String
+
+instance (Member Fail r) => MonadFail (Eff r) where
+  fail = send . Fail
+  {-# INLINE fail #-}
 
 
 ------------------------------------------------------------------------------
