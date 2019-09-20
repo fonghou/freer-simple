@@ -20,7 +20,7 @@ module Control.Monad.Freer.Error
   , mapError
   , catchError
   , handleError
-  , unsafeThrowError
+  , unsafeRunError
   ) where
 
 import qualified Control.Exception as X
@@ -92,7 +92,7 @@ instance (Typeable e) => X.Exception (WrappedError e)
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-unsafeThrowError :: (Typeable e, Member IO effs)
+unsafeRunError :: (Typeable e, Member IO effs)
              => Eff (Error e ': effs) a -> Eff effs a
-unsafeThrowError = subsume @IO $ \case
+unsafeRunError = subsume @IO $ \case
   (Error e) -> X.throwIO $ WrappedError e

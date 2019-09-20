@@ -51,7 +51,7 @@ runConsolePure inputs
     . runState inputs
     . runError
     . interpret go
-    . introduce4
+    . raiseUnder4
   where
     go :: Console v -> Eff '[Error (), State [String], Writer [String], Identity] v
     go = \case

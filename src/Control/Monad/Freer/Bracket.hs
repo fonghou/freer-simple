@@ -55,7 +55,7 @@ raiseLast :: forall m r. Eff r ~> Eff (r :++: '[m])
 raiseLast = coerce
 
 liftZoom :: (Eff r ~> Eff '[IO]) -> Eff (r :++: '[m]) ~> Eff '[IO, m]
-liftZoom f z = introduce $ f $ coerce z
+liftZoom f z = raiseUnder $ f $ coerce z
 
 
 type family Length (r :: [k]) where

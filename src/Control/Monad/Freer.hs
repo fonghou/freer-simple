@@ -195,6 +195,10 @@ module Control.Monad.Freer
 
     -- ** Lifting Effect Stacks
   , raise
+  , raiseUnder
+  , raiseUnder2
+  , raiseUnder3
+  , raiseUnder4
 
     -- * Handling Effects
     -- | Once an effectful computation has been produced, it needs to somehow be
@@ -221,11 +225,10 @@ module Control.Monad.Freer
   , interpret
   , interpose
   , interposeState
-  , introduce
-  , introduce2
-  , introduce3
-  , introduce4
   , reinterpret
+  , reinterpret2
+  , reinterpret3
+  , reinterpret4
   , subsume
   , transform
 
@@ -241,6 +244,10 @@ import Control.Monad.Freer.Internal
   , Member
   , Members
   , raise
+  , raiseUnder
+  , raiseUnder2
+  , raiseUnder3
+  , raiseUnder4
   , run
   , runM
   , send
@@ -251,11 +258,10 @@ import Control.Monad.Freer.Interpretation
   ( interpret
   , interpose
   , interposeState
-  , introduce
-  , introduce2
-  , introduce3
-  , introduce4
   , reinterpret
+  , reinterpret2
+  , reinterpret3
+  , reinterpret4
   , subsume
   , transform
   )

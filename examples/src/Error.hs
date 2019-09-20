@@ -23,7 +23,7 @@ test1 = do
 run1 :: IO ()
 run1 = test1
   & runInputConst @String "world"
-  & unsafeThrowError @String
+  & unsafeRunError @String
   & outputToTrace @String
   & runTrace
   & runM
@@ -42,5 +42,5 @@ run2 = test2
   & runError @String
   & runOutputList @String
   & runTrace
-  & unsafeThrowError @String
+  & unsafeRunError @String
   & runM

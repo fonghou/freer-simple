@@ -14,16 +14,15 @@ import           Control.Monad.Trans.Class (MonadTrans (..))
 import           Control.Monad.Trans.Cont
 import qualified Control.Monad.Trans.Except as E
 import qualified Control.Monad.Trans.State.Strict as S
-import           Data.OpenUnion.Internal
 import           Control.Monad.Freer.Internal
 
 
 ------------------------------------------------------------------------------
 -- | Interpret an effect in terms of another effect in the stack.
 subsume
-    :: Member eff' r
-    => (eff ~> eff')
-    -> Eff (eff ': r) ~> Eff r
+    :: Member eff2 r
+    => (eff1 ~> eff2)
+    -> Eff (eff1 ': r) ~> Eff r
 subsume = naturally id
 {-# INLINE subsume #-}
 
@@ -68,10 +67,30 @@ withStateful s f = stateful f s
 -- useful for interpreters which would like to introduce some intermediate
 -- effects before immediately handling them.
 reinterpret
-    :: (eff1 ~> eff2)
-    -> Eff (eff1 ': r) ~> Eff (eff2 ': r)
-reinterpret = naturally weaken
+  :: forall f g r . (f ~> Eff (g ': r)) -> Eff (f : r) ~> Eff (g : r)
+reinterpret f  = interpret f . raiseUnder
 {-# INLINE reinterpret #-}
+
+reinterpret2
+  :: forall f g1 g2 r 
+  . (f ~> Eff (g1 ': g2 ': r))
+  -> Eff (f : r) ~> Eff (g1 : g2 : r)
+reinterpret2 f  = interpret f . raiseUnder2
+{-# INLINE reinterpret2 #-}
+
+reinterpret3
+  :: forall f g1 g2 g3 r 
+  . (f ~> Eff (g1 ': g2 ': g3 ': r)) 
+  -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': r)
+reinterpret3 f = interpret f . raiseUnder3
+{-# INLINE reinterpret3 #-}
+
+reinterpret4
+  :: forall f g1 g2 g3 g4 r 
+  . (f ~> Eff (g1 ': g2 ': g3 ': g4 ': r))
+  -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': g4 ': r)
+reinterpret4 f = interpret f . raiseUnder4
+{-# INLINE reinterpret4 #-}
 
 
 #if __GLASGOW_HASKELL__ >= 806
@@ -191,30 +210,3 @@ naturally z f (Freer m) = Freer $ \k -> m $ \u ->
     Left x  -> k $ z x
     Right y -> k . inj $ f y
 {-# INLINE naturally #-}
-
-
-------------------------------------------------------------------------------
--- | Introduce a new effect directly underneath the top of the stack. This is
--- often useful for interpreters which would like to introduce some intermediate
--- effects before immediately handling them.
---
--- Also see 'reinterpret'.
-introduce :: Eff (eff ': r) a -> Eff (eff ': u ': r) a
-introduce = hoistEff intro1
-{-# INLINE introduce #-}
-
-
-introduce2 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': r) a
-introduce2 = hoistEff intro2
-{-# INLINE introduce2 #-}
-
-
-introduce3 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': r) a
-introduce3 = hoistEff intro3
-{-# INLINE introduce3 #-}
-
-
-introduce4 :: Eff (eff ': r) a -> Eff (eff ': u ': v ':x ': y ': r) a
-introduce4 = hoistEff intro4
-{-# INLINE introduce4 #-}
-

@@ -25,8 +25,7 @@ runOutputList :: forall o effs a.  Eff (Output o ': effs) a -> Eff effs (a, [o])
 runOutputList =
   fmap (second reverse)
   . runState []
-  . interpret (\case Output o -> modify' (o :))
-  . introduce
+  . reinterpret (\case Output o -> modify' (o :))
 {-# INLINE runOutputList #-}
 
 ------------------------------------------------------------------------------
@@ -38,8 +37,7 @@ runOutputMonoid
     -> Eff effs (a, m)
 runOutputMonoid f =
   runState mempty
-  . interpret (\case Output o -> modify' (`mappend` f o))
-  . introduce
+  . reinterpret (\case Output o -> modify' (<> f o))
 {-# INLINE runOutputMonoid #-}
 
 ------------------------------------------------------------------------------

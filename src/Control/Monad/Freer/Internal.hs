@@ -46,6 +46,10 @@ module Control.Monad.Freer.Internal
 
     -- ** Lifting Effect Stacks
   , raise
+  , raiseUnder
+  , raiseUnder2
+  , raiseUnder3
+  , raiseUnder4
   , liftEff
   , hoistEff
 
@@ -62,6 +66,7 @@ import Control.Natural (type (~>))
 import Data.Functor.Identity (Identity (..))
 
 import Data.OpenUnion
+import Data.OpenUnion.Internal
 
 -- | The 'Eff' monad provides the implementation of a computation that performs
 -- an arbitrary set of algebraic effects. In @'Eff' effs a@, @effs@ is a
@@ -201,3 +206,25 @@ usingFreer k m = runFreer m k
 raise :: Eff effs a -> Eff (e ': effs) a
 raise = hoistEff weaken
 {-# INLINE raise #-}
+
+------------------------------------------------------------------------------
+-- | Introduce a new effect directly underneath the top of the stack. This is
+-- often useful for interpreters which would like to introduce some intermediate
+-- effects before immediately handling them.
+--
+-- Also see 'reinterpret'.
+raiseUnder :: Eff (eff ': r) a -> Eff (eff ': u ': r) a
+raiseUnder = hoistEff intro1
+{-# INLINE raiseUnder #-}
+
+raiseUnder2 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': r) a
+raiseUnder2 = hoistEff intro2
+{-# INLINE raiseUnder2 #-}
+
+raiseUnder3 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': r) a
+raiseUnder3 = hoistEff intro3
+{-# INLINE raiseUnder3 #-}
+
+raiseUnder4 :: Eff (eff ': r) a -> Eff (eff ': u ': v ':x ': y ': r) a
+raiseUnder4 = hoistEff intro4
+{-# INLINE raiseUnder4 #-}

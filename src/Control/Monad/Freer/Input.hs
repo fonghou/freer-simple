@@ -43,5 +43,5 @@ runInputList is = fmap fst . runState is . interpret
         s <- gets uncons
         for_ s $ put . snd
         pure $ fmap fst s
-  ) . introduce
+  ) . raiseUnder
 {-# INLINE runInputList #-}
