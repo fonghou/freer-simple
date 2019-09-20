@@ -19,7 +19,7 @@
 {-# OPTIONS_GHC -Wall                   #-}
 
 module Control.Monad.Freer.Bracket
-  (type Bracketed, liftBracket, runBracket, bracket, finally) where
+  (type Bracketed, liftBracket, runBracket, bracket, bracket_, finally) where
 
 import Data.Proxy
 import GHC.TypeLits
@@ -32,15 +32,15 @@ import Control.Monad.Freer.Internal
 import Data.Coerce
 
 
-data Bracket r a where
+data Resource r a where
   Bracket :: KnownNat (Length r')
           => (Eff r' ~> Eff r)
           -> Eff r' a
           -> (a -> Eff r' ())
           -> (a -> Eff r' b)
-          -> Bracket r b
+          -> Resource r b
 
-type Bracketed r = Eff (Bracket r ': r)
+type Bracketed r = Eff (Resource r ': r)
 
 
 liftBracket :: forall r r'. (Eff r ~> Eff r') -> Bracketed r ~> Bracketed r'
@@ -97,9 +97,17 @@ bracket
     -> Bracketed r b
 bracket alloc dealloc doit = send $ Bracket id alloc dealloc doit
 
+bracket_
+    :: KnownNat (Length r)
+    => Eff r a
+    -> Eff r ()
+    -> Eff r b
+    -> Bracketed r b
+bracket_ before after action = bracket before (const after) (const action)
+
 finally
   :: KnownNat (Length r)
   => Eff r a
   -> Eff r ()
   -> Bracketed r a
-finally act end = bracket (pure ()) (pure end) (const act)
+finally action finalizer = bracket (pure ()) (pure finalizer) (const action)

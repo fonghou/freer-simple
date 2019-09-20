@@ -45,7 +45,7 @@ stateful
     :: (eff ~> S.StateT s (Eff r))
     -> s
     -> Eff (eff ': r) a -> Eff r (s, a)
-stateful f s (Freer m) = (fmap ) swap $ Freer $ \k -> flip S.runStateT s $ m $ \u ->
+stateful f s (Freer m) = fmap swap $ Freer $ \k -> flip S.runStateT s $ m $ \u ->
     case decomp u of
       Left  x -> lift $ k x
       Right y -> hoist (usingFreer k) $ f y
