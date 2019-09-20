@@ -36,24 +36,36 @@ data Writer w r where
 -- | Send a change to the attached environment.
 tell :: forall w effs. Member (Writer w) effs => w -> Eff effs ()
 tell w = send (Tell w)
+{-# INLINE tell #-}
 
 -- | Simple handler for 'Writer' effects.
 runWriter :: forall w effs a. Monoid w
           => Eff (Writer w ': effs) a -> Eff effs (a, w)
 runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
 
-listens :: Member (Writer w) effs
-        => (w -> b) -> Eff effs a -> Eff effs (a, b)
-listens f = undefined
+listens :: forall w effs a b. Monoid w
+        => (w -> b) -> Eff (Writer w ': effs) a -> Eff effs (a, b)
+listens f m = do
+  (a, w) <- runWriter m -- should be interpose
+  -- tell w
+  return (a, f w)
+{-# INLINE listens #-}
 
-listen :: Member (Writer w) effs
-       => Eff effs a -> Eff effs (a, w)
+listen :: forall w effs a. Monoid w
+       => Eff (Writer w ': effs) a -> Eff effs (a, w)
 listen = listens id
+{-# INLINE listen #-}
 
-pass :: Member (Writer w) effs
-     => Eff effs (a, w -> w) -> Eff effs a
-pass = undefined
+pass :: forall w effs a. Monoid w
+     => Eff (Writer w ': effs) (a, w -> w) -> Eff effs a
+pass m = do
+  ((a, f), w) <- runWriter m -- should be interpose
+   -- tell $ f w
+  return a
 
-censor :: Member (Writer w) effs
-       => (w -> w) -> Eff effs a -> Eff effs a
+{-# INLINE pass #-}
+
+censor :: forall w effs a. Monoid w
+       => (w -> w) -> Eff (Writer w ': effs) a -> Eff effs a
 censor f m = pass (fmap (, f) m)
+{-# INLINE censor #-}
