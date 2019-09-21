@@ -1,8 +1,8 @@
-
-module Control.Monad.Freer.Fail 
+module Control.Monad.Freer.Fail
   ( Fail(..)
   , runFail
   , failToError
+  , failToMonadFail
   )
  where
 
@@ -15,18 +15,17 @@ runFail :: Eff (Fail ': r) a -> Eff r (Either String a)
 runFail = runError . reinterpret (\(Fail s) -> throwError s)
 {-# INLINE runFail #-}
 
-failToEmbed
+failToMonadFail
   :: forall m r a
   . (LastMember m r, MonadFail m)
   => Eff (Fail ': r) a
   -> Eff r a
-failToEmbed = interpret $ \(Fail s) -> sendM @m (Fail.fail s)
+failToMonadFail = interpret $ \(Fail s) -> sendM @m (Fail.fail s)
 
-failToError 
+failToError
   :: Member (Error e) r
   => (String -> e)
   -> Eff (Fail ': r) a
   -> Eff r a
 failToError f = interpret $ \(Fail s) -> throwError (f s)
 {-# INLINE failToError #-}
-

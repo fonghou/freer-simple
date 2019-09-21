@@ -15,6 +15,7 @@ module Control.Monad.Freer.Trace
   ( Trace(..)
   , trace
   , runTrace
+  , runTraceList
   , ignoreTrace
   , traceToOutput
   , outputToTrace
@@ -53,6 +54,17 @@ traceToOutput
 traceToOutput = interpret $ \case
   Trace m -> output m
 {-# INLINE traceToOutput #-}
+
+------------------------------------------------------------------------------
+-- | Get the result of a 'Trace' effect as a list of 'String's.
+runTraceList
+    :: Eff (Trace ': r) a
+    -> Eff r ([String], a)
+runTraceList = runOutputList . reinterpret (
+  \case
+    Trace m -> output m
+  )
+{-# INLINE runTraceList #-}
 
 ------------------------------------------------------------------------------
 -- | Transform an 'Output' 'String' effect into a 'Trace' effect.

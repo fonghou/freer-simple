@@ -7,7 +7,7 @@ import Control.Monad.Freer.Error
 import Control.Monad.Freer.Fail
 import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
--- import Control.Monad.Freer.State
+import Control.Monad.Freer.State
 import Control.Monad.Freer.Trace
 import Data.Function
 
@@ -45,6 +45,35 @@ run2 = test2
   & runTrace
   & unsafeRunError @String
   & runM
+
+test3 :: Members '[State String, Error String] r => Eff r String
+test3 = do
+  let throwing, catching :: Members '[State String, Error String] r => Eff r String
+      throwing = do
+        modify (++"-throw")
+        throwError "error"
+        get
+      catching = do
+        modify (++"-catch")
+        get
+  catchError @String throwing (\ _ -> catching)
+
+run3 :: IO ()
+run3 = test3
+  & runError
+  & fmap (either id id)
+  & evalState "Error before State"
+  & runM
+  & (print =<<)
+
+
+run3' :: IO ()
+run3' = test3
+  & evalState "State before Error"
+  & runError
+  & fmap (either id id)
+  & runM
+  & (print =<<)
 
 testFail :: Member Fail r => Maybe Bool -> Eff r Bool
 testFail mb = do

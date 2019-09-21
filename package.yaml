@@ -63,6 +63,7 @@ library:
   - mmorph
   - resourcet
   - random
+  - stm
 
 executables:
   freer-examples:
