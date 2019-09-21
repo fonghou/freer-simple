@@ -8,7 +8,7 @@ import Data.List (intercalate)
 import System.Environment (getArgs)
 
 import Control.Monad.Freer (Eff, Member, runM, send)
-import Control.Monad.Freer.Bracket
+import Control.Monad.Freer.Resource
 import Control.Monad.Freer.Error
 
 import Capitalize (Capitalize, capitalize, runCapitalize)

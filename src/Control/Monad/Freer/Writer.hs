@@ -18,8 +18,8 @@ module Control.Monad.Freer.Writer
   , tell
   , listen
   , listens
-  , pass
   , censor
+--  , pass
   , runWriter
   ) where
 

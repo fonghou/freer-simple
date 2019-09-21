@@ -71,6 +71,7 @@ executables:
     main: Main.hs
     dependencies:
     - freer-simple
+    - mtl
     - safe-exceptions
 
 tests:

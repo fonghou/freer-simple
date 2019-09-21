@@ -4,9 +4,9 @@ module Error where
 import Control.Exception.Safe
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
-import Control.Monad.Freer.Fail
 import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
+import Control.Monad.Freer.Writer
 import Control.Monad.Freer.State
 import Control.Monad.Freer.Trace
 import Data.Function
@@ -61,8 +61,8 @@ test3 = do
 run3 :: IO ()
 run3 = test3
   & runError
-  & fmap (either id id)
   & evalState "Error before State"
+  & fmap (either id id)
   & runM
   & (print =<<)
 
@@ -75,7 +75,5 @@ run3' = test3
   & runM
   & (print =<<)
 
-testFail :: Member Fail r => Maybe Bool -> Eff r Bool
-testFail mb = do
-  Just b <- pure mb
-  pure b
+test6 :: (String, (String, ()))
+test6 = run . runWriter $ listen $ tell "yup"

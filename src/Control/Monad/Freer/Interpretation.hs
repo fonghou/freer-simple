@@ -155,8 +155,8 @@ interposeState
     :: Member eff r
     => (eff ~> S.StateT s (Eff r))
     -> s
-    -> Eff r a -> Eff r (a, s)
-interposeState f s (Freer m) = Freer $ \k ->
+    -> Eff r a -> Eff r (s, a)
+interposeState f s (Freer m) = fmap swap $ Freer $ \k ->
   usingFreer k $ flip S.runStateT s $ m $ \u ->
     case prj u of
       Nothing -> lift $ liftEff u

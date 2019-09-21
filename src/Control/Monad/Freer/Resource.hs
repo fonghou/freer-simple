@@ -18,7 +18,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 {-# OPTIONS_GHC -Wall                   #-}
 
-module Control.Monad.Freer.Bracket
+module Control.Monad.Freer.Resource
   (type Bracketed, liftBracket, runBracket, bracket, bracket_, finally) where
 
 import Data.Proxy

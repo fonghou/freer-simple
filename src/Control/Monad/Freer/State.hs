@@ -119,7 +119,7 @@ transactState
   -> Eff effs a
 transactState m = do
     s0 <- get @s
-    (x, s) <- interposeState stateNat s0 m
+    (s, x) <- interposeState stateNat s0 m
     put s
     pure x
 
