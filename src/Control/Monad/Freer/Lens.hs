@@ -31,7 +31,7 @@ views l f = fmap f (Reader.asks @r (Lens.view l))
 use
   :: forall s a eff. (Member (State s) eff)
   => Getting a s a -> Eff eff a
-use l = State.gets (Lens.view l)
+use l = State.gets @s (Lens.view l)
 {-# INLINE use #-}
 
 uses
@@ -46,7 +46,7 @@ infixr 4 .=
 assign, (.=)
   :: forall s a b eff. (Member (State s) eff)
   => ASetter s s a b -> b -> Eff eff ()
-assign l b = State.modify' (Lens.set l b)
+assign l b = State.modify' @s (Lens.set l b)
 {-# INLINE assign #-}
 
 infixr 4 %=
@@ -55,5 +55,5 @@ infixr 4 %=
 modifying, (%=)
   :: forall s a b eff. (Member (State s) eff)
   => ASetter s s a b -> (a -> b) -> Eff eff ()
-modifying l f = State.modify' (Lens.over l f)
+modifying l f = State.modify' @s (Lens.over l f)
 {-# INLINE modifying #-}
