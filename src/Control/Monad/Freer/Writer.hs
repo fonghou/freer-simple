@@ -19,7 +19,7 @@ module Control.Monad.Freer.Writer
   , listen
   , listens
   , censor
---  , pass
+  , pass
   , runWriter
   ) where
 
@@ -46,7 +46,7 @@ runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
 listens :: forall w effs a b. (Monoid w, Member (Writer w) effs)
         => (w -> b) -> Eff (Writer w ': effs) a -> Eff effs (b, a)
 listens f m = do
-  (w, a) <- runWriter m -- use interpose?
+  (w, a) <- runWriter m
   tell w
   return (f w, a)
 {-# INLINE listens #-}
@@ -59,12 +59,16 @@ listen = listens id
 pass :: forall w effs a. (Monoid w, Member (Writer w) effs)
      => Eff (Writer w ': effs) (w -> w, a) -> Eff effs a
 pass m = do
-  (w, (f, a)) <- runWriter m -- interpose?
-  tell $ f w
+  (w, (f, a)) <- runWriter m
+  tell (f w)
   return a
 {-# INLINE pass #-}
 
+-- | censor f m = pass (fmap (f ,) m)
 censor :: forall w effs a.(Monoid w, Member (Writer w) effs)
        => (w -> w) -> Eff (Writer w ': effs) a -> Eff effs a
-censor f m = pass (fmap (f ,) m)
+censor f m = do
+  (w, a) <- runWriter m
+  tell (f w)
+  return a
 {-# INLINE censor #-}
