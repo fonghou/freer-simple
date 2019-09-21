@@ -1,5 +1,4 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-
 -- |
 -- Module:       Control.Monad.Freer.State
 -- Description:  State effects, for state-carrying computations.
@@ -113,9 +112,7 @@ evalState s = fmap snd . runState s
 -- specified explicitly with @TypeApplications@. Alternatively, it can be
 -- specified by supplying a 'Proxy' to 'transactState''.
 transactState
-  :: forall s effs a
-   . Member (State s) effs
-  => Eff effs a
+  :: forall s effs a . Member (State s) effs => Eff effs a
   -> Eff effs a
 transactState m = do
     s0 <- get @s
@@ -126,10 +123,7 @@ transactState m = do
 -- | Like 'transactState', but @s@ is specified by providing a 'Proxy'
 -- instead of requiring @TypeApplications@.
 transactState'
-  :: forall s effs a
-   . Member (State s) effs
-  => Proxy s
-  -> Eff effs a
-  -> Eff effs a
+  :: forall s effs a . Member (State s) effs
+  => Proxy s -> Eff effs a -> Eff effs a
 transactState' _ = transactState @s
 {-# INLINE transactState' #-}

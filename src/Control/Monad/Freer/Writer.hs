@@ -39,25 +39,29 @@ tell w = send (Tell w)
 {-# INLINE tell #-}
 
 -- | Simple handler for 'Writer' effects.
-runWriter :: forall w effs a. Monoid w
-          => Eff (Writer w ': effs) a -> Eff effs (w, a)
+runWriter
+  :: forall w effs a. Monoid w
+  => Eff (Writer w ': effs) a -> Eff effs (w, a)
 runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
 
-listens :: forall w effs a b. (Monoid w, Member (Writer w) effs)
-        => (w -> b) -> Eff (Writer w ': effs) a -> Eff effs (b, a)
+listens
+  :: forall w effs a b. (Monoid w, Member (Writer w) effs)
+  => (w -> b) -> Eff (Writer w ': effs) a -> Eff effs (b, a)
 listens f m = do
   (w, a) <- runWriter m
   tell w
   return (f w, a)
 {-# INLINE listens #-}
 
-listen :: forall w effs a. (Monoid w, Member (Writer w) effs)
-       => Eff (Writer w ': effs) a -> Eff effs (w, a)
+listen
+  :: forall w effs a. (Monoid w, Member (Writer w) effs)
+  => Eff (Writer w ': effs) a -> Eff effs (w, a)
 listen = listens id
 {-# INLINE listen #-}
 
-pass :: forall w effs a. (Monoid w, Member (Writer w) effs)
-     => Eff (Writer w ': effs) (w -> w, a) -> Eff effs a
+pass
+  :: forall w effs a. (Monoid w, Member (Writer w) effs)
+  => Eff (Writer w ': effs) (w -> w, a) -> Eff effs a
 pass m = do
   (w, (f, a)) <- runWriter m
   tell (f w)
@@ -65,8 +69,9 @@ pass m = do
 {-# INLINE pass #-}
 
 -- | censor f m = pass (fmap (f ,) m)
-censor :: forall w effs a.(Monoid w, Member (Writer w) effs)
-       => (w -> w) -> Eff (Writer w ': effs) a -> Eff effs a
+censor
+  :: forall w effs a.(Monoid w, Member (Writer w) effs)
+  => (w -> w) -> Eff (Writer w ': effs) a -> Eff effs a
 censor f m = do
   (w, a) <- runWriter m
   tell (f w)

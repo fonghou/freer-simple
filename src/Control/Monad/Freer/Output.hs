@@ -29,8 +29,8 @@ output = send . Output
 {-# INLINE output #-}
 
 runOutputList
-  :: forall o effs a
-  . Eff (Output o ': effs) a
+  :: forall o effs a.
+     Eff (Output o ': effs) a
   -> Eff effs ([o], a)
 runOutputList =
   fmap (first reverse)
@@ -59,8 +59,7 @@ runOutputMonoid f =
 -- You should always use this instead of 'runOutputMonoid' if the monoid
 -- is a list, such as 'String'.
 runOutputMonoidAssocR
-    :: forall o m effs a
-     . Monoid m
+    :: forall o m effs a. Monoid m
     => (o -> m)
     -> Eff (Output o ': effs) a
     -> Eff effs (m, a)
@@ -85,8 +84,7 @@ ignoreOutput = interpret $ \case
 -- If @size@ is 0, this interpretation will not emit anything in the resulting
 -- 'Output' effect.
 runOutputBatched
-    :: forall o r a
-     . Member (Output [o]) r
+    :: forall o r a. Member (Output [o]) r
     => Int
     -> Eff (Output o ': r) a
     -> Eff r a
@@ -116,7 +114,10 @@ runOutputEff act = interpret $ \case
 {-# INLINE runOutputEff #-}
 
 -- | Transform an 'Output' effect into a 'Writer' effect.
-outputToWriter :: Member (Writer o) effs => Eff (Output o ': effs) a -> Eff effs a
+outputToWriter
+  :: Member (Writer o) effs
+  => Eff (Output o ': effs) a
+  -> Eff effs a
 outputToWriter = interpret $ \case
   Output o -> tell o
 {-# INLINE outputToWriter #-}
@@ -128,8 +129,7 @@ outputToWriter = interpret $ \case
 --
 -- @since 1.1.0.0
 runOutputMonoidIORef
-    :: forall o m r a
-     . (Monoid m, LastMember IO r)
+    :: forall o m r a. (Monoid m, LastMember IO r)
     => IORef m
     -> (o -> m)
     -> Eff (Output o ': r) a
@@ -143,8 +143,7 @@ runOutputMonoidIORef ref f = interpret $ \case
 -- | Run an 'Output' effect by transforming it into atomic operations
 -- over a 'TVar'.
 runOutputMonoidTVar
-    :: forall o m r a
-     . (Monoid m, LastMember IO r)
+    :: forall o m r a. (Monoid m, LastMember IO r)
     => TVar m
     -> (o -> m)
     -> Eff (Output o ': r) a

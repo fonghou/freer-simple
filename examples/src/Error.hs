@@ -75,5 +75,9 @@ run3' = test3
   & runM
   & (print =<<)
 
-test6 :: (String, (String, ()))
-test6 = run . runWriter $ listen $ tell "yup"
+writer1 :: (String, (String, ()) )
+writer1 = run . runWriter $ listen $ tell "yup"
+
+writer2 :: (String, ())
+writer2 = run . runWriter $ censor @String (const "hello") $ tell "yup"
+

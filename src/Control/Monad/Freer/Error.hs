@@ -35,13 +35,12 @@ newtype Error e r where
   Error :: e -> Error e r
 
 -- | Throws an error carrying information of type @e :: *@.
-throwError :: forall e effs a. Member (Error e) effs 
-           => e -> Eff effs a
+throwError :: forall e effs a. Member (Error e) effs => e -> Eff effs a
 throwError e = send (Error e)
 {-# INLINE throwError #-}
 
 -- | Upgrade an 'Either' into an 'Error' effect.
-fromEither :: forall e effs a.Member (Error e) effs 
+fromEither :: forall e effs a. Member (Error e) effs
            => Either e a -> Eff effs a
 fromEither (Left e) = throwError e
 fromEither (Right a) = pure a
@@ -60,18 +59,18 @@ catchError m handle = interposeRelay pure (\(Error e) _ -> handle e) m
 {-# INLINE catchError #-}
 
 -- | A catcher for Exceptions. Handlers are /not/ allowed to rethrow exceptions.
-handleError
-  :: forall e effs a
-   . Eff (Error e ': effs) a
-  -> (e -> Eff effs a)
+handleError :: forall e effs a. Eff (Error e ': effs) a -> (e -> Eff effs a)
   -> Eff effs a
 handleError m handle = relay pure (\(Error e) _ -> handle e) m
 {-# INLINE handleError #-}
 
 -- | Transform one 'Error' into another. This function can be used to aggregate
 -- multiple errors into a single type.
-mapError :: forall e1 e2 r a. Member (Error e2) r
-         => (e1 -> e2) -> Eff (Error e1 ': r) a -> Eff r a
+mapError
+  :: forall e1 e2 r a. Member (Error e2) r
+   => (e1 -> e2) 
+   -> Eff (Error e1 ': r) a 
+   -> Eff r a
 mapError f m = do
   e1 <- runError m
   fromEither (first f e1)
@@ -92,7 +91,8 @@ instance (Typeable e) => X.Exception (WrappedError e)
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-unsafeRunError :: (Typeable e, Member IO effs)
-             => Eff (Error e ': effs) a -> Eff effs a
+unsafeRunError
+  :: (Typeable e, Member IO effs)
+  => Eff (Error e ': effs) a -> Eff effs a
 unsafeRunError = subsume @IO $ \case
   (Error e) -> X.throwIO $ WrappedError e

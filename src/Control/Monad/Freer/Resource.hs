@@ -90,19 +90,19 @@ runBracket (Freer m) = runResourceT $ m $ \u ->
 
 
 bracket
-    :: KnownNat (Length r)
-    => Eff r a
-    -> (a -> Eff r ())
-    -> (a -> Eff r b)
-    -> Bracketed r b
+  :: KnownNat (Length r)
+  => Eff r a
+  -> (a -> Eff r ())
+  -> (a -> Eff r b)
+  -> Bracketed r b
 bracket alloc dealloc doit = send $ Bracket id alloc dealloc doit
 
 bracket_
-    :: KnownNat (Length r)
-    => Eff r a
-    -> Eff r ()
-    -> Eff r b
-    -> Bracketed r b
+  :: KnownNat (Length r)
+  => Eff r a
+  -> Eff r ()
+  -> Eff r b
+  -> Bracketed r b
 bracket_ before after action = bracket before (const after) (const action)
 
 finally

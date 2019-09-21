@@ -22,9 +22,9 @@ import           Control.Monad.Freer.Internal
 ------------------------------------------------------------------------------
 -- | Interpret an effect in terms of another effect in the stack.
 subsume
-    :: Member eff2 r
-    => (eff1 ~> eff2)
-    -> Eff (eff1 ': r) ~> Eff r
+  :: Member eff2 r
+  => (eff1 ~> eff2)
+  -> Eff (eff1 ': r) ~> Eff r
 subsume = naturally id
 {-# INLINE subsume #-}
 
@@ -42,10 +42,11 @@ interpret f (Freer m) = Freer $ \k -> m $ \u ->
 ------------------------------------------------------------------------------
 -- | Like 'interpret', but with access to intermediate state.
 stateful
-    :: (eff ~> S.StateT s (Eff r))
-    -> s
-    -> Eff (eff ': r) a -> Eff r (s, a)
-stateful f s (Freer m) = fmap swap $ Freer $ \k -> flip S.runStateT s $ m $ \u ->
+  :: (eff ~> S.StateT s (Eff r))
+  -> s
+  -> Eff (eff ': r) a -> Eff r (s, a)
+stateful f s (Freer m) = fmap swap $ Freer $ \k ->
+  flip S.runStateT s $ m $ \u ->
     case decomp u of
       Left  x -> lift $ k x
       Right y -> hoist (usingFreer k) $ f y
@@ -57,9 +58,9 @@ stateful f s (Freer m) = fmap swap $ Freer $ \k -> flip S.runStateT s $ m $ \u -
 ------------------------------------------------------------------------------
 -- | flip stateful
 withStateful
-    :: s
-    -> (eff ~> S.StateT s (Eff r))
-    -> Eff (eff ': r) a -> Eff r (s, a)
+  :: s
+  -> (eff ~> S.StateT s (Eff r))
+  -> Eff (eff ': r) a -> Eff r (s, a)
 withStateful s f = stateful f s
 {-# INLINE withStateful #-}
 
@@ -99,18 +100,18 @@ reinterpret4 f = interpret f . raiseUnder4
 ------------------------------------------------------------------------------
 -- | Run an effect via the side-effects of a monad transformer.
 transform
-    :: ( MonadTrans t
-       , forall m. Monad m => Monad (t m)
-       )
-    => (forall m. Eff r ~> m -> t (Eff r) ~> t m)
-       -- ^ The strategy for hoisting a natural transformation. This is usually
-       -- just 'hoist'.
-    -> (forall m. t m a -> m b)
-       -- ^ The strategy for getting out of the monad transformer. This is
-       -- usually just @runWhateverT@.
-    -> (eff ~> t (Eff r))
-    -> Eff (eff ': r) a
-    -> Eff r b
+  :: ( MonadTrans t
+     , forall m. Monad m => Monad (t m)
+     )
+  => (forall m. Eff r ~> m -> t (Eff r) ~> t m)
+     -- ^ The strategy for hoisting a natural transformation. This is usually
+     -- just 'hoist'.
+  -> (forall m. t m a -> m b)
+     -- ^ The strategy for getting out of the monad transformer. This is
+     -- usually just @runWhateverT@.
+  -> (eff ~> t (Eff r))
+  -> Eff (eff ': r) a
+  -> Eff r b
 transform hoist' lower f (Freer m) =
   Freer $ \k -> lower $ m $ \u ->
     case decomp u of
@@ -123,9 +124,9 @@ transform hoist' lower f (Freer m) =
 ------------------------------------------------------------------------------
 -- | Run an effect, potentially short circuiting in its evaluation.
 shortCircuit
-    :: (eff ~> E.ExceptT e (Eff r))
-    -> Eff (eff ': r) a
-    -> Eff r (Either e a)
+  :: (eff ~> E.ExceptT e (Eff r))
+  -> Eff (eff ': r) a
+  -> Eff r (Either e a)
 shortCircuit f (Freer m) = Freer $ \k -> E.runExceptT $ m $ \u ->
   case decomp u of
     Left  x -> lift $ k x
@@ -139,9 +140,9 @@ shortCircuit f (Freer m) = Freer $ \k -> E.runExceptT $ m $ \u ->
 -- |Like 'interpret', but instead of handling the effect, allows responding to
 -- the effect while leaving it unhandled.
 interpose
-    :: Member eff r
-    => (eff ~> Eff r)
-    -> Eff r ~> Eff r
+  :: Member eff r
+  => (eff ~> Eff r)
+  -> Eff r ~> Eff r
 interpose f (Freer m) = Freer $ \k -> m $ \u ->
   case prj u of
     Nothing -> k u
@@ -152,10 +153,10 @@ interpose f (Freer m) = Freer $ \k -> m $ \u ->
 ------------------------------------------------------------------------------
 -- | Like 'Interpose', but with access to intermediate state.
 interposeState
-    :: Member eff r
-    => (eff ~> S.StateT s (Eff r))
-    -> s
-    -> Eff r a -> Eff r (s, a)
+  :: Member eff r
+  => (eff ~> S.StateT s (Eff r))
+  -> s
+  -> Eff r a -> Eff r (s, a)
 interposeState f s (Freer m) = fmap swap $ Freer $ \k ->
   usingFreer k $ flip S.runStateT s $ m $ \u ->
     case prj u of
@@ -172,10 +173,10 @@ interposeState f s (Freer m) = fmap swap $ Freer $ \k ->
 -- available here. If you just need short circuiting, consider using
 -- 'shortCircuit' instead.
 relay
-    :: (a -> Eff r b)
-    -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
-    -> Eff (eff ': r) a
-    -> Eff r b
+  :: (a -> Eff r b)
+  -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
+  -> Eff (eff ': r) a
+  -> Eff r b
 relay pure' bind' (Freer m) = Freer $ \k ->
   usingFreer k $ flip runContT pure' $ m $ \u ->
     case decomp u of
@@ -187,11 +188,11 @@ relay pure' bind' (Freer m) = Freer $ \k ->
 ------------------------------------------------------------------------------
 -- | Like 'interpose' and 'relay'.
 interposeRelay
-    :: Member eff r
-    => (a -> Eff r b)
-    -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
-    -> Eff r a
-    -> Eff r b
+  :: Member eff r
+  => (a -> Eff r b)
+  -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
+  -> Eff r a
+  -> Eff r b
 interposeRelay pure' bind' (Freer m) = Freer $ \k ->
   usingFreer k $ flip runContT pure' $ m $ \u ->
     case prj u of
@@ -203,10 +204,10 @@ interposeRelay pure' bind' (Freer m) = Freer $ \k ->
 ------------------------------------------------------------------------------
 -- | Run an effect, potentially changing the entire effect stack underneath it.
 naturally
-    :: Member eff' r'
-    => (Union r ~> Union r')
-    -> (eff ~> eff')
-    -> Eff (eff ': r) ~> Eff r'
+  :: Member eff' r'
+  => (Union r ~> Union r')
+  -> (eff ~> eff')
+  -> Eff (eff ': r) ~> Eff r'
 naturally z f (Freer m) = Freer $ \k -> m $ \u ->
   case decomp u of
     Left x  -> k $ z x

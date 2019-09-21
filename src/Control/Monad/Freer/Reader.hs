@@ -46,8 +46,7 @@ ask = send Ask
 -- | Request a value of the environment, and apply as selector\/projection
 -- function to it.
 asks
-  :: forall r effs a
-   . Member (Reader r) effs
+  :: forall r effs a . Member (Reader r) effs
   => (r -> a)
   -- ^ The selector\/projection function to be applied to the environment.
   -> Eff effs a

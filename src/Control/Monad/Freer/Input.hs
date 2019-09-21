@@ -25,7 +25,11 @@ runInputConst c = interpret $ \case
 
 ------------------------------------------------------------------------------
 -- | Runs an 'Input' effect by evaluating a monadic action for each request.
-runInputEff :: forall i effs a. Eff effs i -> Eff (Input i ': effs) a -> Eff effs a
+runInputEff
+  :: forall i effs a.
+       Eff effs i
+    -> Eff (Input i ': effs) a 
+    -> Eff effs a
 runInputEff m = interpret $ \case
   Input -> m
 {-# INLINE runInputEff #-}
@@ -33,10 +37,11 @@ runInputEff m = interpret $ \case
 ------------------------------------------------------------------------------
 -- | Run an 'Input' effect by providing a different element of a list each
 -- time. Returns 'Nothing' after the list is exhausted.
-runInputList
-    :: [i]
-    -> Eff (Input (Maybe i) ': effs) a
-    -> Eff effs a
+runInputList 
+  :: forall i effs a.
+     [i]
+  -> Eff (Input (Maybe i) ': effs) a
+  -> Eff effs a
 runInputList is = fmap snd . runState is . interpret
   (\case
       Input -> do
