@@ -19,7 +19,7 @@
 {-# OPTIONS_GHC -Wall                   #-}
 
 module Control.Monad.Freer.Resource
-  (type Bracketed, liftBracket, runBracket, bracket, bracket_, finally) where
+  (type Bracketed, liftBracket, runResource, bracket, bracket_, finally) where
 
 import Data.Proxy
 import GHC.TypeLits
@@ -66,8 +66,8 @@ getLength :: forall k (r :: [k]). KnownNat (Length r) => Word
 getLength = fromInteger $ natVal $ Proxy @(Length r)
 
 
-runBracket :: Bracketed '[IO] ~> IO
-runBracket (Freer m) = runResourceT $ m $ \u ->
+runResource :: Bracketed '[IO] ~> IO
+runResource (Freer m) = runResourceT $ m $ \u ->
   case decomp u of
     Left x -> liftIO $ extract x
     Right (Bracket z (alloc :: Eff r' a) dealloc doit) -> do

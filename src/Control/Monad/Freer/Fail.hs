@@ -30,19 +30,32 @@ failToError
 failToError f = interpret $ \(Fail s) -> throwError (f s)
 {-# INLINE failToError #-}
 
-{-
+{-|
+$doctest
 
+>>> :{
 test :: Member Fail r => Maybe Bool -> Eff r Bool
 test mb = do
   Just b <- pure mb
   pure b
+:}
 
-runM @[] . failToMonad $ test Nothing
-runM @[] . failToMonad $ test (Just True)
-runM @Maybe . failToMonad $ test Nothing
-runM @Maybe . failToMonad $ test (Just False)
-run . runError @String . failToError id $ test Nothing
-run . runError @String . failToError id $ test (Just True)
-run . runError @String . failToError id $ test (Just False)
+>>> runM @[] . failToMonad $ test Nothing
+[]
+
+>>> runM @Maybe . failToMonad $ test Nothing
+Nothing
+
+>>> runM @Maybe . failToMonad $ test (Just False)
+Just False
+
+>>> run . runError @String . failToError id $ test Nothing
+Left "Pattern match failure in do expression at <interactive>:24:3-8"
+
+>>> run . runError @String . failToError id $ test (Just True)
+Right True
+
+>>> run . runError @String . failToError id $ test (Just False)
+Right False
 
 -}
