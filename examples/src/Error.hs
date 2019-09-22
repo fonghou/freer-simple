@@ -4,6 +4,7 @@ module Error where
 import Control.Exception.Safe
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
+import Control.Monad.Freer.Fail
 import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
 import Control.Monad.Freer.Writer
