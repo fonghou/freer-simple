@@ -19,7 +19,7 @@
 {-# OPTIONS_GHC -Wall                   #-}
 
 module Control.Monad.Freer.Resource
-  (type Bracketed, liftBracket, runResource, bracket, bracket_, finally) where
+  (type Bracketed, runResource, bracket, bracket_, finally) where
 
 import Data.Proxy
 import GHC.TypeLits
@@ -30,7 +30,6 @@ import Data.OpenUnion.Internal
 import Control.Monad.Freer.Interpretation
 import Control.Monad.Freer.Internal
 import Data.Coerce
-
 
 data Resource r a where
   Bracket :: KnownNat (Length r')
@@ -65,9 +64,8 @@ type family Length (r :: [k]) where
 getLength :: forall k (r :: [k]). KnownNat (Length r) => Word
 getLength = fromInteger $ natVal $ Proxy @(Length r)
 
-
-runResource :: Bracketed '[IO] ~> IO
-runResource (Freer m) = runResourceT $ m $ \u ->
+runBracket :: Bracketed '[IO] ~> IO
+runBracket (Freer m) = runResourceT $ m $ \u ->
   case decomp u of
     Left x -> liftIO $ extract x
     Right (Bracket z (alloc :: Eff r' a) dealloc doit) -> do
@@ -88,6 +86,15 @@ runResource (Freer m) = runResourceT $ m $ \u ->
         liftResource $ release key
         pure r
 
+-- | Run a 'Resource' effect in terms of 'bracket'.
+--
+-- Also see 'unsafeRunError'
+runResource
+  :: forall r. (Eff r ~> Eff '[IO])
+    -- ^ Strategy for lowering an effect stack down to [IO].
+    -- This is likely some composition of runA . runB. unsafeRunError.
+  -> Bracketed r ~> IO
+runResource f m = runBracket $ liftBracket f m
 
 bracket
   :: KnownNat (Length r)
@@ -96,7 +103,9 @@ bracket
   -> (a -> Eff r b)
   -> Bracketed r b
 bracket alloc dealloc doit = send $ Bracket id alloc dealloc doit
+{-# INLINE bracket #-}
 
+-- | Like 'bracket', but after and action don't pass parameter.
 bracket_
   :: KnownNat (Length r)
   => Eff r a
@@ -104,10 +113,15 @@ bracket_
   -> Eff r b
   -> Bracketed r b
 bracket_ before after action = bracket before (const after) (const action)
+{-# INLINE bracket_ #-}
 
+-- | Like 'bracket', but for the simple case of one computation to run
+-- afterward.
 finally
   :: KnownNat (Length r)
   => Eff r a
   -> Eff r ()
   -> Bracketed r a
 finally action finalizer = bracket (pure ()) (pure finalizer) (const action)
+{-# INLINE finally #-}
+

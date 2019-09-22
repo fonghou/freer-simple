@@ -68,12 +68,10 @@ handleError m handle = relay pure (\(Error e) _ -> handle e) m
 -- multiple errors into a single type.
 mapError
   :: forall e1 e2 r a. Member (Error e2) r
-   => (e1 -> e2) 
-   -> Eff (Error e1 ': r) a 
+   => (e1 -> e2)
+   -> Eff (Error e1 ': r) a
    -> Eff r a
-mapError f m = do
-  e1 <- runError m
-  fromEither (first f e1)
+mapError f m = handleError @e1 m $ \ e -> throwError (f e)
 {-# INLINE mapError #-}
 
 
@@ -81,7 +79,7 @@ newtype WrappedError e = WrappedError e
   deriving (Typeable)
 
 instance Typeable e => Show (WrappedError e) where
-  show = mappend "WrappedExc: " . show . typeRep
+  show = mappend "WrappedError: " . show . typeRep
 
 instance (Typeable e) => X.Exception (WrappedError e)
 

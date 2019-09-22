@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main (main) where
 
+import qualified Control.Exception.Safe as X
 import Control.Monad (forever, when)
 import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
@@ -60,16 +61,15 @@ mainConsoleB = runM (runCapitalize (runConsoleM capitalizingService))
 printEff :: Member IO r => String -> Eff r ()
 printEff = send @IO . putStrLn
 
-fromRight :: Either a b -> b
-fromRight = either undefined id
-
 mainBracket :: IO ()
-mainBracket = runResource $ liftBracket (fmap fromRight . runError @String) $ do
-  bracket (printEff "alloc") (const $ printEff "dealloc") $ const $ do
-    printEff "hi"
-    -- _ <- error "fuck"
-    _ <- throwError "fuck"
-    printEff "bye"
+mainBracket =
+  X.handleAny (\e -> print e) $ 
+    runResource (unsafeRunError @String) $ do 
+      bracket (printEff "alloc") (const $ printEff "dealloc") $ const $ do
+        printEff "hi"
+        -- _ <- error "fuck"
+        _ <- throwError "fuck"
+        printEff "bye"
 
 examples :: [(String, IO ())]
 examples =
