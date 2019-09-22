@@ -11,6 +11,7 @@ import System.Environment (getArgs)
 import Control.Monad.Freer (Eff, Member, runM, send)
 import Control.Monad.Freer.Resource
 import Control.Monad.Freer.Error
+import Control.Monad.Freer.Trace
 
 import Capitalize (Capitalize, capitalize, runCapitalize)
 import Console
@@ -58,18 +59,15 @@ mainConsoleB = runM (runCapitalize (runConsoleM capitalizingService))
 --        Eff '[Capitalize, IO] () -'           |
 --           Eff '[Console, Capitalize, IO] () -'
 
-printEff :: Member IO r => String -> Eff r ()
-printEff = send @IO . putStrLn
-
 mainBracket :: IO ()
 mainBracket =
-  X.handleAny (\e -> print e) $ 
-    runResource (unsafeRunError @String) $ do 
-      bracket (printEff "alloc") (const $ printEff "dealloc") $ const $ do
-        printEff "hi"
-        -- _ <- error "fuck"
-        _ <- throwError "fuck"
-        printEff "bye"
+  X.handleAny (\e -> print e) $
+    runResource (unsafeRunError @String . runTrace) $ do
+      bracket (trace "alloc") (const $ trace "dealloc") $ const $ do
+        trace "hi"
+        -- _ <- error "die"
+        _ <- throwError "die"
+        trace "bye"
 
 examples :: [(String, IO ())]
 examples =
