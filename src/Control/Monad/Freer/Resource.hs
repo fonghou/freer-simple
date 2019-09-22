@@ -48,13 +48,15 @@ liftBracket f (Freer m) = Freer $ \k -> m $ \u ->
     Left x -> usingFreer k $ raise $ f $ liftEff x
     Right (Bracket z alloc dealloc doit) ->
       usingFreer k $ send $Bracket (f . z) alloc dealloc doit
-
+{-# INLINE liftBracket #-}
 
 raiseLast :: forall m r. Eff r ~> Eff (r :++: '[m])
 raiseLast = coerce
+{-# INLINE raiseLast #-}
 
 liftZoom :: (Eff r ~> Eff '[IO]) -> Eff (r :++: '[m]) ~> Eff '[IO, m]
 liftZoom f z = raiseUnder $ f $ coerce z
+{-# INLINE liftZoom #-}
 
 
 type family Length (r :: [k]) where
@@ -63,6 +65,7 @@ type family Length (r :: [k]) where
 
 getLength :: forall k (r :: [k]). KnownNat (Length r) => Word
 getLength = fromInteger $ natVal $ Proxy @(Length r)
+{-# INLINE getLength #-}
 
 runBracket :: Bracketed '[IO] ~> IO
 runBracket (Freer m) = runResourceT $ m $ \u ->
@@ -95,6 +98,7 @@ runResource
     -- This is likely some composition of runA . runB. unsafeRunError.
   -> Bracketed r ~> IO
 runResource f m = runBracket $ liftBracket f m
+{-# INLINE runResource #-}
 
 bracket
   :: KnownNat (Length r)
@@ -124,4 +128,3 @@ finally
   -> Bracketed r a
 finally action finalizer = bracket (pure ()) (pure finalizer) (const action)
 {-# INLINE finally #-}
-
