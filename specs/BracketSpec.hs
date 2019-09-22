@@ -20,7 +20,7 @@ test = X.handleAny (\e -> print e >> return 0) $ runResource lower $ do
          output $ "input is: " <> x
          let ex = mapError @Bool show (throwError False)
          handleError @String ex $ \e -> return e >>= trace . ("Error is " <>)
-         throwError "fuck"
+         throwError $ "DIE"
          trace "End"
          return (i + 10)
     where
@@ -28,6 +28,7 @@ test = X.handleAny (\e -> print e >> return 0) $ runResource lower $ do
           . unsafeRunError @String
           . unsafeRunError @Bool
           . outputToTrace @String
+          -- . runOutputList @String
           . runInputConst "hello"
           . runInputConst @Int 1
 
