@@ -19,10 +19,10 @@ runTest = runResource . nt $ do
        throwError "ERR"
        trace "end"
   where
-    -- nt :: Bracketed [Error String, Trace, IO] ~> Bracketed '[IO]
-    nt = liftBracket $ fmap fromRight . runError @String
+    nt = liftBracket $ fmap fromRight
+         . runError @String
          . runInputConst "hello"
          . runTrace
 
 spec :: Spec
-spec = undefined
+spec = return ()
