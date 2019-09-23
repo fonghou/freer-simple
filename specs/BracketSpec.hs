@@ -9,6 +9,7 @@ import Control.Monad.Freer.Resource
 
 import Test.Hspec
 
+test :: IO Int
 test = X.handleAny (\e -> print e >> return 0) $ runResource lower $ do
      bracket
         (trace "Before">> return "!!!")
@@ -20,11 +21,12 @@ test = X.handleAny (\e -> print e >> return 0) $ runResource lower $ do
          output $ "input is: " <> x
          let ex = mapError @Bool show (throwError False)
          handleError @String ex $ \e -> return e >>= trace . ("Error is " <>)
-         throwError $ "DIE"
+         _ <- throwError $ "DIE"
          trace "End"
          return (i + 10)
     where
     lower = runTrace
+          -- . runTraceList
           . unsafeRunError @String
           . unsafeRunError @Bool
           . outputToTrace @String

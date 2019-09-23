@@ -93,6 +93,7 @@ tests:
     - freer-simple
     - hspec
     - doctest
+    - safe-exceptions
     ghc-options:
     - -threaded
     - -rtsopts
