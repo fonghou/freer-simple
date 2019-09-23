@@ -81,7 +81,6 @@ runBracket (Freer m) = runResourceT $ m $ \u ->
           liftResource :: ResourceT IO ~> Eff (r' :++: '[ResourceT IO])
           liftResource = liftEff . unsafeInj (getLength @_ @r' + 1)
 
-
       runM $ (z') $ do
         a <- raising alloc
         key <- liftResource $ register $ runM $ z $ dealloc a
@@ -89,13 +88,13 @@ runBracket (Freer m) = runResourceT $ m $ \u ->
         liftResource $ release key
         pure r
 
--- | Run a 'Resource' effect in terms of 'bracket'.
+-- | Run a 'Bracket' effect in terms of 'ResourceT IO'
 --
 -- Also see 'unsafeRunError'
 runResource
   :: forall r. (Eff r ~> Eff '[IO])
     -- ^ Strategy for lowering an effect stack down to [IO].
-    -- This is likely some composition of runA . runB. unsafeRunError.
+    -- This is usually some composition of runA . runB. unsafeRunError.
   -> Bracketed r ~> IO
 runResource f m = runBracket $ liftBracket f m
 {-# INLINE runResource #-}

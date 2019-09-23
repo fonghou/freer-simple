@@ -20,16 +20,6 @@ import           Control.Monad.Freer.Internal
 
 
 ------------------------------------------------------------------------------
--- | Interpret an effect in terms of another effect in the stack.
-subsume
-  :: Member eff2 r
-  => (eff1 ~> eff2)
-  -> Eff (eff1 ': r) ~> Eff r
-subsume = naturally id
-{-# INLINE subsume #-}
-
-
-------------------------------------------------------------------------------
 -- | Interpret an effect as a monadic action in 'Eff r'.
 interpret :: (eff ~> Eff r) -> Eff (eff ': r) ~> Eff r
 interpret f (Freer m) = Freer $ \k -> m $ \u ->
@@ -75,21 +65,21 @@ reinterpret f  = interpret f . raiseUnder
 {-# INLINE reinterpret #-}
 
 reinterpret2
-  :: forall f g1 g2 r 
+  :: forall f g1 g2 r
   . (f ~> Eff (g1 ': g2 ': r))
   -> Eff (f : r) ~> Eff (g1 : g2 : r)
 reinterpret2 f  = interpret f . raiseUnder2
 {-# INLINE reinterpret2 #-}
 
 reinterpret3
-  :: forall f g1 g2 g3 r 
+  :: forall f g1 g2 g3 r
   . (f ~> Eff (g1 ': g2 ': g3 ': r)) 
   -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': r)
 reinterpret3 f = interpret f . raiseUnder3
 {-# INLINE reinterpret3 #-}
 
 reinterpret4
-  :: forall f g1 g2 g3 g4 r 
+  :: forall f g1 g2 g3 g4 r
   . (f ~> Eff (g1 ': g2 ': g3 ': g4 ': r))
   -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': g4 ': r)
 reinterpret4 f = interpret f . raiseUnder4
@@ -146,7 +136,7 @@ interpose
 interpose f (Freer m) = Freer $ \k -> m $ \u ->
   case prj u of
     Nothing -> k u
-    Just e  -> usingFreer k $ f e
+    Just e  -> runFreer (f e) k
 {-# INLINE interpose #-}
 
 
@@ -199,6 +189,31 @@ interposeRelay pure' bind' (Freer m) = Freer $ \k ->
       Nothing -> lift $ liftEff u
       Just y  -> ContT $ bind' y
 {-# INLINE interposeRelay #-}
+
+
+-- | Interprets an effect in terms of another identical effect. This can be used
+-- to eliminate duplicate effects.
+subsume
+  :: Member g r => (f ~> g) -> Eff (f ': r) ~> Eff r
+subsume = naturally id
+{-# INLINE subsume #-}
+
+-- | Runs an effect by translating it into another effect. This is effectively a
+-- more restricted form of 'reinterpret', since both produce a natural
+-- transformation from @'Eff' (f ': r)@ to @'Eff' (g ': r)@ for some
+-- effects @f@ and @g@, but 'translate' does not permit using any of the other
+-- effects in the implementation of the interpreter.
+--
+-- In practice, this difference in functionality is not particularly useful, and
+-- 'reinterpret' easily subsumes all of the functionality of 'translate', but
+-- the way 'translate' restricts the result leads to much better type inference.
+--
+-- @
+-- 'translate' f = 'reinterpret' ('send' . f)
+-- @
+translate :: forall f g r. (f ~> g) -> Eff (f ': r) ~> Eff (g ': r)
+translate = naturally weaken
+{-# INLINE translate #-}
 
 
 ------------------------------------------------------------------------------

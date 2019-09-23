@@ -39,6 +39,7 @@ tell w = send (Tell w)
 {-# INLINE tell #-}
 
 -- | Simple handler for 'Writer' effects.
+-- NB: Writer tuple (w, a) is swapped from MTL (a, w)
 runWriter
   :: forall w effs a. Monoid w
   => Eff (Writer w ': effs) a -> Eff effs (w, a)
@@ -53,6 +54,9 @@ listens f m = do
   return (f w, a)
 {-# INLINE listens #-}
 
+-- | listen executes the action and adds its output to
+-- the value of the computation.
+-- NB: returned tuple (w, a) is swapped from MTL (a, w)
 listen
   :: forall w effs a. (Monoid w, Member (Writer w) effs)
   => Eff (Writer w ': effs) a -> Eff effs (w, a)
@@ -68,7 +72,11 @@ pass m = do
   return a
 {-# INLINE pass #-}
 
--- | censor f m = pass (fmap (f ,) m)
+-- | @'censor' f m@ is an action that executes the action @m@ and
+-- applies the function @f@ to its output, leaving the return value
+-- unchanged.
+--
+-- censor f m = pass (fmap (f ,) m)
 censor
   :: forall w effs a.(Monoid w, Member (Writer w) effs)
   => (w -> w) -> Eff (Writer w ': effs) a -> Eff effs a

@@ -84,7 +84,7 @@ gets f = f <$> get
 {-# INLINE gets #-}
 
 -- | Handler for 'State' effects.
--- NB: returns (s, a), swapped from MTL State
+-- NB: State tuple (s, a) is swapped from MTL State (a, s)
 runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (s, a)
 runState = stateful stateNat
 {-# INLINE runState #-}

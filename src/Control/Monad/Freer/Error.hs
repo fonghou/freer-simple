@@ -27,7 +27,6 @@ import qualified Control.Exception as X
 import Control.Monad.Freer (Eff, Member, send)
 import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.Except as E
-import Data.Bifunctor (first)
 import Data.Typeable
 
 -- | Exceptions of the type @e :: *@ with no resumption.

@@ -1,4 +1,4 @@
-## Note: This fork copy most of first order polysemy effects, but retain the simplicity of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) and performance of non-higher-order [**polysemy**](https://github.com/polysemy-research/polysemy) freer encoding.  Hence the branch name polysemy-simple
+## Note: This is a fork of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) backporting most of first order polysemy effects, but retain the MTL-order performance of [**polysemy**](https://github.com/polysemy-research/polysemy) non-higher-order freer encoding (see [**discussion**](https://github.com/polysemy-research/polysemy/issues/229)).  Hence the branch name freer-simple-faster.
 
 # freer-simple — a friendly effect system for Haskell [![Build Status](https://travis-ci.org/lexi-lambda/freer-simple.svg?branch=master)](https://travis-ci.org/lexi-lambda/freer-simple)
 
