@@ -43,6 +43,7 @@ fromEither :: forall e effs a. Member (Error e) effs
            => Either e a -> Eff effs a
 fromEither (Left e) = throwError e
 fromEither (Right a) = pure a
+{-# INLINE fromEither #-}
 
 -- | Handler for exception effects. If there are no exceptions thrown, returns
 -- 'Right'. If exceptions are thrown and not handled, returns 'Left', while
@@ -93,3 +94,4 @@ unsafeRunError
   => Eff (Error e ': effs) a -> Eff effs a
 unsafeRunError = subsume @IO $ \case
   (Error e) -> X.throwIO $ WrappedError e
+{-# INLINE unsafeRunError #-}

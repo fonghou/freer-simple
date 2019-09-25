@@ -26,7 +26,7 @@ module Control.Monad.Freer.Writer
 import Data.Monoid ((<>))
 
 import Control.Monad.Freer.Internal (Eff, Member, send)
-import Control.Monad.Freer.Interpretation (withStateful)
+import Control.Monad.Freer.Interpretation (stateful)
 import Control.Monad.Trans.State.Strict (modify')
 
 -- | Writer effects - send outputs to an effect environment.
@@ -43,7 +43,7 @@ tell w = send (Tell w)
 runWriter
   :: forall w effs a. Monoid w
   => Eff (Writer w ': effs) a -> Eff effs (w, a)
-runWriter = withStateful mempty $ \(Tell w) -> modify' (<> w)
+runWriter = stateful ( \(Tell w) -> modify' (<> w) ) mempty
 
 listens
   :: forall w effs a b. (Monoid w, Member (Writer w) effs)

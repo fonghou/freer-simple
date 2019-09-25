@@ -40,19 +40,9 @@ stateful f s (Freer m) = fmap swap $ Freer $ \k ->
     case decomp u of
       Left  x -> lift $ k x
       Right y -> hoist (usingFreer k) $ f y
-{-# INLINE stateful #-}
+{-# INLINE[3] stateful #-}
 -- NB: @stateful f s = transform (flip S.runStateT s) f@, but is not
 -- implemented as such, since 'transform' is available only >= 8.6.0
-
-
-------------------------------------------------------------------------------
--- | flip stateful
-withStateful
-  :: s
-  -> (eff ~> S.StateT s (Eff r))
-  -> Eff (eff ': r) a -> Eff r (s, a)
-withStateful s f = stateful f s
-{-# INLINE withStateful #-}
 
 
 ------------------------------------------------------------------------------
@@ -62,28 +52,28 @@ withStateful s f = stateful f s
 reinterpret
   :: forall f g r . (f ~> Eff (g ': r)) -> Eff (f : r) ~> Eff (g : r)
 reinterpret f  = interpret f . raiseUnder
-{-# INLINE reinterpret #-}
+{-# INLINE[3] reinterpret #-}
 
 reinterpret2
   :: forall f g1 g2 r
   . (f ~> Eff (g1 ': g2 ': r))
   -> Eff (f : r) ~> Eff (g1 : g2 : r)
 reinterpret2 f  = interpret f . raiseUnder2
-{-# INLINE reinterpret2 #-}
+{-# INLINE[3] reinterpret2 #-}
 
 reinterpret3
   :: forall f g1 g2 g3 r
   . (f ~> Eff (g1 ': g2 ': g3 ': r)) 
   -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': r)
 reinterpret3 f = interpret f . raiseUnder3
-{-# INLINE reinterpret3 #-}
+{-# INLINE[3] reinterpret3 #-}
 
 reinterpret4
   :: forall f g1 g2 g3 g4 r
   . (f ~> Eff (g1 ': g2 ': g3 ': g4 ': r))
   -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': g4 ': r)
 reinterpret4 f = interpret f . raiseUnder4
-{-# INLINE reinterpret4 #-}
+{-# INLINE[3] reinterpret4 #-}
 
 
 #if __GLASGOW_HASKELL__ >= 806
