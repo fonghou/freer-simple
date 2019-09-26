@@ -41,6 +41,8 @@ module Control.Monad.Freer.Internal
   , type (~>)
 
     -- ** Sending Arbitrary Effect
+  , Embed
+  , embed
   , send
   , sendM
 
@@ -71,6 +73,8 @@ import Data.Functor.Identity (Identity (..))
 
 import Data.OpenUnion
 import Data.OpenUnion.Internal
+
+import Control.Monad.Freer.Type (Embed (..))
 
 -- | The 'Eff' monad provides the implementation of a computation that performs
 -- an arbitrary set of algebraic effects. In @'Eff' effs a@, @effs@ is a
@@ -128,10 +132,15 @@ instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
   liftBase = sendM . liftBase
   {-# INLINE liftBase #-}
 
+instance (Member (Embed IO) r) => MonadIO (Eff r) where
+  liftIO = embed
+  {-# INLINE liftIO #-}
+
+{-|
 instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
   liftIO = sendM . liftIO
   {-# INLINE liftIO #-}
-
+-}
 
 instance MonadTrans Freer where
   lift = liftEff
@@ -176,6 +185,11 @@ send = liftEff . inj
 sendM :: (Monad m, LastMember m effs) => m a -> Eff effs a
 sendM = send
 {-# INLINE sendM #-}
+
+-- | Embed a monadic action @m@ in 'Eff'.
+embed :: Member (Embed m) effs => m a -> Eff effs a
+embed = send . Embed
+{-# INLINE embed #-}
 
 --------------------------------------------------------------------------------
                        -- Base Effect Runner --

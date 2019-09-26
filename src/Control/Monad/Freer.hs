@@ -190,6 +190,8 @@ module Control.Monad.Freer
   , LastMember
 
     -- ** Sending Arbitrary Effects
+  , Embed(..)
+  , embed
   , send
   , sendM
 
@@ -238,6 +240,8 @@ module Control.Monad.Freer
 
 import Control.Natural (type (~>))
 
+import Control.Monad.Freer.Type (Embed(..))
+
 import Control.Monad.Freer.Internal
   ( Eff
   , LastMember
@@ -252,6 +256,7 @@ import Control.Monad.Freer.Internal
   , runM
   , send
   , sendM
+  , embed
   )
 
 import Control.Monad.Freer.Interpretation

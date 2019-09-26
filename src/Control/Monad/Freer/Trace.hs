@@ -21,9 +21,9 @@ module Control.Monad.Freer.Trace
   , outputToTrace
   ) where
 
-import Control.Monad.Freer.Internal (Eff, Member, send, type (~>))
-import Control.Monad.Freer.Interpretation
+import Control.Monad.Freer
 import Control.Monad.Freer.Output
+import System.IO
 
 -- | A Trace effect; takes a 'String' and performs output.
 data Trace a where
@@ -36,7 +36,7 @@ trace = send . Trace
 
 -- | An 'IO' handler for 'Trace' effects.
 runTrace :: Member IO effs => Eff (Trace ': effs) ~> Eff effs
-runTrace = subsume @IO $ \(Trace s) -> putStrLn s
+runTrace = subsume @IO $ \(Trace s) -> hPutStrLn stderr s
 {-# INLINE runTrace #-}
 
 ------------------------------------------------------------------------------

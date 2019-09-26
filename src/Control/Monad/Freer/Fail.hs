@@ -1,8 +1,10 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 module Control.Monad.Freer.Fail
   ( Fail(..)
   , runFail
   , failToError
   , failToMonad
+  , failToEmbed
   )
  where
 
@@ -16,8 +18,7 @@ runFail = runError . reinterpret (\(Fail s) -> throwError s)
 {-# INLINE runFail #-}
 
 failToMonad
-  :: forall m r a
-  . (LastMember m r, MonadFail m)
+  :: forall m r a . (LastMember m r, MonadFail m)
   => Eff (Fail ': r) a
   -> Eff r a
 failToMonad = interpret $ \(Fail s) -> sendM @m (Fail.fail s)
@@ -29,6 +30,13 @@ failToError
   -> Eff r a
 failToError f = interpret $ \(Fail s) -> throwError (f s)
 {-# INLINE failToError #-}
+
+-- | Run a 'Fail' effect in terms of an underlying 'MonadFail' instance.
+failToEmbed
+  :: forall m r a. (Member (Embed m) r, MonadFail m)
+  => Eff (Fail ': r) a -> Eff r a
+failToEmbed = interpret $ \(Fail s) -> embed @m (Fail.fail s)
+{-# INLINE failToEmbed #-}
 
 {-|
 $doctest

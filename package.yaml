@@ -65,6 +65,7 @@ library:
   - resourcet
   - random
   - stm
+  - unliftio-core
   - hspec
 
 executables:
