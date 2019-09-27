@@ -1,10 +1,10 @@
-{-# OPTIONS_GHC -Wno-redundant-constraints #-} -- Due to use of TypeError.
-{-# OPTIONS_HADDOCK not-home #-}
-
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+{-# OPTIONS_GHC -Wno-redundant-constraints #-} -- Due to use of TypeError.
+{-# OPTIONS_HADDOCK not-home #-}
 
 -- |
 -- Module:       Data.OpenUnion.Internal
@@ -32,8 +32,9 @@
 -- substitution for @Typeable@.
 module Data.OpenUnion.Internal where
 
-import GHC.TypeLits (TypeError, ErrorMessage(..))
-import Unsafe.Coerce (unsafeCoerce)
+import GHC.TypeLits ( ErrorMessage(..), TypeError )
+
+import Unsafe.Coerce ( unsafeCoerce )
 
 -- | Open union is a strong sum (existential with an evidence).
 data Union (r :: [* -> *]) a where
@@ -49,6 +50,7 @@ data Union (r :: [* -> *]) a where
 -- /O(1)/
 unsafeInj :: Word -> t a -> Union r a
 unsafeInj = Union
+
 {-# INLINE unsafeInj #-}
 
 -- | Project a value of type @'Union' (t ': r) :: * -> *@ into a possible
@@ -63,13 +65,14 @@ unsafeInj = Union
 -- /O(1)/
 unsafePrj :: Word -> Union r a -> Maybe (t a)
 unsafePrj n (Union n' x)
-  | n == n'   = Just (unsafeCoerce x)
+  | n == n' = Just (unsafeCoerce x)
   | otherwise = Nothing
+
 {-# INLINE unsafePrj #-}
 
 -- | Represents position of element @t :: * -> *@ in a type list
 -- @r :: [* -> *]@.
-newtype P t r = P {unP :: Word}
+newtype P t r = P { unP :: Word }
 
 -- | Find an index of an element @t :: * -> *@ in a type list @r :: [* -> *]@.
 -- The element must exist. The @w :: [* -> *]@ type represents the entire list,
@@ -91,7 +94,7 @@ instance FindElem t (t ': r) where
 
 -- | Recursion; element is not at the current position, but is somewhere in the
 -- list.
-instance {-# OVERLAPPABLE #-} FindElem t r => FindElem t (t' ': r) where
+instance {-# OVERLAPPABLE #-}FindElem t r => FindElem t (t' ': r) where
   elemNo = P $ 1 + unP (elemNo :: P t r)
 
 -- | Instance resolution for this class fails with a custom type error
@@ -103,19 +106,20 @@ class IfNotFound (t :: * -> *) (r :: [* -> *]) (w :: [* -> *])
 -- states what went wrong.
 instance TypeError ('Text "‘" ':<>: 'ShowType t
                     ':<>: 'Text "’ is not a member of the type-level list"
-                    ':$$: 'Text "  ‘" ':<>: 'ShowType w ':<>: 'Text "’"
-                    ':$$: 'Text "In the constraint ("
+                    ':$$: 'Text "  ‘" ':<>: 'ShowType w
+                    ':<>: 'Text "’" ':$$: 'Text "In the constraint ("
                     ':<>: 'ShowType (Member t w) ':<>: 'Text ")")
-    => IfNotFound t '[] w
+  => IfNotFound t '[] w
 
 instance IfNotFound t (t ': r) w
-instance {-# OVERLAPPABLE #-} IfNotFound t r w => IfNotFound t (t' ': r) w
+
+instance {-# OVERLAPPABLE #-}IfNotFound t r w => IfNotFound t (t' ': r) w
 
 -- | Pass if @r@ is uninstantiated. The incoherence here is safe, since picking
 -- this instance doesn’t cause any variation in behavior, except possibly the
 -- production of an inferior error message. For more information, see
 -- lexi-lambda/freer-simple#3, which describes the motivation in more detail.
-instance {-# INCOHERENT #-} IfNotFound t r w
+instance {-# INCOHERENT #-}IfNotFound t r w
 
 -- | A constraint that requires that a particular effect, @eff@, is a member of
 -- the type-level list @effs@. This is used to parameterize an
@@ -142,7 +146,6 @@ class FindElem eff effs => Member (eff :: * -> *) effs where
   -- @
   -- 'prj' . 'inj' === 'Just'
   -- @
-
   -- | Takes a request of type @t :: * -> *@, and injects it into the
   -- 'Union'.
   --
@@ -158,9 +161,10 @@ class FindElem eff effs => Member (eff :: * -> *) effs where
 
 instance (FindElem t r, IfNotFound t r r) => Member t r where
   inj = unsafeInj $ unP (elemNo :: P t r)
-  {-# INLINE inj #-}
 
+  {-# INLINE inj #-}
   prj = unsafePrj $ unP (elemNo :: P t r)
+
   {-# INLINE prj #-}
 
 -- | Orthogonal decomposition of a @'Union' (t ': r) :: * -> *@. 'Right' value
@@ -171,7 +175,8 @@ instance (FindElem t r, IfNotFound t r r) => Member t r where
 -- /O(1)/
 decomp :: Union (t ': r) a -> Either (Union r a) (t a)
 decomp (Union 0 a) = Right $ unsafeCoerce a
-decomp (Union n a) = Left  $ Union (n - 1) a
+decomp (Union n a) = Left $ Union (n - 1) a
+
 {-# INLINE [2] decomp #-}
 
 -- | Specialized version of 'decomp' for efficiency.
@@ -181,8 +186,9 @@ decomp (Union n a) = Left  $ Union (n - 1) a
 -- TODO: Check that it actually adds on efficiency.
 decomp0 :: Union '[t] a -> Either (Union '[] a) (t a)
 decomp0 (Union _ a) = Right $ unsafeCoerce a
+
 {-# INLINE decomp0 #-}
-{-# RULES "decomp/singleton"  decomp = decomp0 #-}
+{-# RULES "decomp/singleton" decomp = decomp0 #-}
 
 -- | Specialised version of 'prj'\/'decomp' that works on an
 -- @'Union' '[t] :: * -> *@ which contains only one specific summand. Hence the
@@ -191,6 +197,7 @@ decomp0 (Union _ a) = Right $ unsafeCoerce a
 -- /O(1)/
 extract :: Union '[t] a -> t a
 extract (Union _ a) = unsafeCoerce a
+
 {-# INLINE extract #-}
 
 -- | Inject whole @'Union' r@ into a weaker @'Union' (any ': r)@ that has one
@@ -199,34 +206,39 @@ extract (Union _ a) = unsafeCoerce a
 -- /O(1)/
 weaken :: Union r a -> Union (any ': r) a
 weaken (Union n a) = Union (n + 1) a
+
 {-# INLINE weaken #-}
 
 -- | Introduce a type directly under the head of the 'Union'.
 intro1 :: Union (u ': r) a -> Union (u ': v ': r) a
 intro1 (Union 0 a) = Union 0 a
 intro1 (Union n a) = Union (n + 1) a
+
 {-# INLINE intro1 #-}
 
 -- | Introduce two types directly under the head of the 'Union'.
 intro2 :: Union (u ': r) a -> Union (u ': v ': x ': r) a
 intro2 (Union 0 a) = Union 0 a
 intro2 (Union n a) = Union (n + 2) a
+
 {-# INLINE intro2 #-}
 
 -- | Introduce three type directly under the head of the 'Union'.
 intro3 :: Union (u ': r) a -> Union (u ': v ': x ': y ': r) a
 intro3 (Union 0 a) = Union 0 a
 intro3 (Union n a) = Union (n + 3) a
+
 {-# INLINE intro3 #-}
 
 -- | Introduce three type directly under the head of the 'Union'.
 intro4 :: Union (u ': r) a -> Union (u ': v ': x ': y ': z ': r) a
 intro4 (Union 0 a) = Union 0 a
 intro4 (Union n a) = Union (n + 4) a
-{-# INLINE intro4 #-}
 
+{-# INLINE intro4 #-}
 infixr 5 :++:
-type family xs :++: ys where
+
+type family xs :++:  ys where
   '[] :++: ys = ys
   (x ': xs) :++: ys = x ': (xs :++: ys)
 
@@ -235,6 +247,7 @@ class Weakens q where
 
 instance Weakens '[] where
   weakens = id
+
   {-# INLINE weakens #-}
 
 instance Weakens xs => Weakens (x ': xs) where

@@ -167,106 +167,96 @@ automatically using Template Haskell; see "Control.Monad.Freer.TH" for more
 details.
 -}
 module Control.Monad.Freer
-  ( -- * Effect Monad
-    Eff
-
-    -- ** Effect Constraints
-    -- | As mentioned in the documentation for 'Eff', it’s rare to actually
-    -- specify a concrete list of effects for an 'Eff' computation, since that
-    -- has two significant downsides:
-    --
-    --   1. It couples the computation to that /specific/ list of effects, so it
-    --      cannot be used in functions that perform a strict superset of
-    --      effects.
-    --
-    --   2. It forces the effects to be handled in a particular order, which
-    --      can make handler code brittle when the list of effects is changed.
-    --
-    -- Fortunately, these restrictions are easily avoided by using
-    -- /effect constraints/, such as 'Member' or 'Members', which decouple a
-    -- computation from a particular concrete list of effects.
-  , Member
-  , Members
-  , LastMember
-
-    -- ** Sending Arbitrary Effects
-  , Embed(..)
-  , embed
-  , send
-  , sendM
-
-    -- ** Lifting Effect Stacks
-  , raise
-  , raiseUnder
-  , raiseUnder2
-  , raiseUnder3
-  , raiseUnder4
-
-    -- * Handling Effects
-    -- | Once an effectful computation has been produced, it needs to somehow be
-    -- executed. This is where /effect handlers/ come in. Each effect can have
-    -- an arbitrary number of different effect handlers, which can be used to
-    -- interpret the same effects in different ways. For example, it is often
-    -- useful to have two effect handlers: one that uses 'sendM' and
-    -- 'interpretM' to interpret the effect in 'IO', and another that uses
-    -- 'interpret', 'reinterpret', or 'translate' to interpret the effect in an
-    -- entirely pure way for the purposes of testing.
-    --
-    -- This module doesn’t provide any effects or effect handlers (those are in
-    -- their own modules, like "Control.Monad.Freer.Reader" and
-    -- "Control.Monad.Freer.Error"), but it /does/ provide a set of combinators
-    -- for constructing new effect handlers. It also provides the 'run' and
-    -- 'runM' functions for extracting the actual result of an effectful
-    -- computation once all effects have been handled.
-
-    -- ** Running the Eff monad
-  , run
-  , runM
-
-    -- ** Interpretation
-  , interpret
-  , interpose
-  , interposeState
-  , reinterpret
-  , reinterpret2
-  , reinterpret3
-  , reinterpret4
-  , subsume
-  , transform
-
-    -- * Re-exported bindings
-  , type (~>)
-  ) where
-
-import Control.Natural (type (~>))
-
-import Control.Monad.Freer.Type (Embed(..))
+    ( -- * Effect Monad
+      Eff
+      -- ** Effect Constraints
+      -- | As mentioned in the documentation for 'Eff', it’s rare to actually
+      -- specify a concrete list of effects for an 'Eff' computation, since that
+      -- has two significant downsides:
+      --
+      --   1. It couples the computation to that /specific/ list of effects, so it
+      --      cannot be used in functions that perform a strict superset of
+      --      effects.
+      --
+      --   2. It forces the effects to be handled in a particular order, which
+      --      can make handler code brittle when the list of effects is changed.
+      --
+      -- Fortunately, these restrictions are easily avoided by using
+      -- /effect constraints/, such as 'Member' or 'Members', which decouple a
+      -- computation from a particular concrete list of effects.
+    , Member
+    , Members
+    , LastMember
+      -- ** Sending Arbitrary Effects
+    , Embed(..)
+    , embed
+    , send
+    , sendM
+      -- ** Lifting Effect Stacks
+    , raise
+    , raiseUnder
+    , raiseUnder2
+    , raiseUnder3
+    , raiseUnder4
+      -- * Handling Effects
+      -- | Once an effectful computation has been produced, it needs to somehow be
+      -- executed. This is where /effect handlers/ come in. Each effect can have
+      -- an arbitrary number of different effect handlers, which can be used to
+      -- interpret the same effects in different ways. For example, it is often
+      -- useful to have two effect handlers: one that uses 'sendM' and
+      -- 'interpretM' to interpret the effect in 'IO', and another that uses
+      -- 'interpret', 'reinterpret', or 'translate' to interpret the effect in an
+      -- entirely pure way for the purposes of testing.
+      --
+      -- This module doesn’t provide any effects or effect handlers (those are in
+      -- their own modules, like "Control.Monad.Freer.Reader" and
+      -- "Control.Monad.Freer.Error"), but it /does/ provide a set of combinators
+      -- for constructing new effect handlers. It also provides the 'run' and
+      -- 'runM' functions for extracting the actual result of an effectful
+      -- computation once all effects have been handled.
+      -- ** Running the Eff monad
+    , run
+    , runM
+      -- ** Interpretation
+    , interpret
+    , interpose
+    , interposeState
+    , reinterpret
+    , reinterpret2
+    , reinterpret3
+    , reinterpret4
+    , subsume
+    , transform
+      -- * Re-exported bindings
+    , type (~>)
+    ) where
 
 import Control.Monad.Freer.Internal
-  ( Eff
-  , LastMember
-  , Member
-  , Members
-  , raise
-  , raiseUnder
-  , raiseUnder2
-  , raiseUnder3
-  , raiseUnder4
-  , run
-  , runM
-  , send
-  , sendM
-  , embed
-  )
-
+       ( Eff
+       , LastMember
+       , Member
+       , Members
+       , embed
+       , raise
+       , raiseUnder
+       , raiseUnder2
+       , raiseUnder3
+       , raiseUnder4
+       , run
+       , runM
+       , send
+       , sendM
+       )
 import Control.Monad.Freer.Interpretation
-  ( interpret
-  , interpose
-  , interposeState
-  , reinterpret
-  , reinterpret2
-  , reinterpret3
-  , reinterpret4
-  , subsume
-  , transform
-  )
+       ( interpose
+       , interposeState
+       , interpret
+       , reinterpret
+       , reinterpret2
+       , reinterpret3
+       , reinterpret4
+       , subsume
+       , transform
+       )
+import Control.Monad.Freer.Type ( Embed(..) )
+import Control.Natural ( type (~>) )

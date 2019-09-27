@@ -1,43 +1,42 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+
 module Control.Monad.Freer.Fail
-  ( Fail(..)
-  , runFail
-  , failToError
-  , failToMonad
-  , failToEmbed
-  )
- where
+    ( Fail(..)
+    , runFail
+    , failToError
+    , failToMonad
+    , failToEmbed
+    ) where
 
 import Control.Monad.Fail as Fail
 import Control.Monad.Freer
-import Control.Monad.Freer.Internal (Fail(..))
 import Control.Monad.Freer.Error
+import Control.Monad.Freer.Internal ( Fail(..) )
 
 runFail :: Eff (Fail ': r) a -> Eff r (Either String a)
 runFail = runError . reinterpret (\(Fail s) -> throwError s)
-{-# INLINE runFail #-}
 
-failToMonad
-  :: forall m r a . (LastMember m r, MonadFail m)
-  => Eff (Fail ': r) a
-  -> Eff r a
+{-# INLINE runFail #-}
+failToMonad :: forall m r a.
+            (LastMember m r, MonadFail m)
+            => Eff (Fail ': r) a
+            -> Eff r a
 failToMonad = interpret $ \(Fail s) -> sendM @m (Fail.fail s)
 
 failToError
-  :: Member (Error e) r
-  => (String -> e)
-  -> Eff (Fail ': r) a
-  -> Eff r a
+   :: Member (Error e) r => (String -> e) -> Eff (Fail ': r) a -> Eff r a
 failToError f = interpret $ \(Fail s) -> throwError (f s)
+
 {-# INLINE failToError #-}
 
 -- | Run a 'Fail' effect in terms of an underlying 'MonadFail' instance.
-failToEmbed
-  :: forall m r a. (Member (Embed m) r, MonadFail m)
-  => Eff (Fail ': r) a -> Eff r a
+failToEmbed :: forall m r a.
+            (Member (Embed m) r, MonadFail m)
+            => Eff (Fail ': r) a
+            -> Eff r a
 failToEmbed = interpret $ \(Fail s) -> embed @m (Fail.fail s)
-{-# INLINE failToEmbed #-}
 
+{-# INLINE failToEmbed #-}
 {-|
 $doctest
 

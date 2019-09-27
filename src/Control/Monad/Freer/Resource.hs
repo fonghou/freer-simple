@@ -88,7 +88,7 @@ runBracket (Freer m) = runResourceT $ m $ \u ->
         liftResource $ release key
         pure r
 
--- | Run a 'Bracket' effect in terms of 'ResourceT IO'
+-- | Run a 'Bracket' effect in terms of 'ResourceT'
 --
 -- Also see 'unsafeRunError'
 runResource

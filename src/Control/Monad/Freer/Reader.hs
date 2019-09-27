@@ -12,45 +12,43 @@
 --
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Reader
-  ( -- * Reader Effect
-    Reader(..)
-
-    -- * Reader Operations
-  , ask
-  , asks
-  , local
-
-    -- * Reader Handlers
-  , runReader
+    ( -- * Reader Effect
+      Reader(..)
+      -- * Reader Operations
+    , ask
+    , asks
+    , local
+      -- * Reader Handlers
+    , runReader
+    ) where
 
     -- * Example 1: Simple Reader Usage
     -- $simpleReaderExample
-
     -- * Example 2: Modifying Reader Content With @local@
     -- $localExample
-  ) where
-
-import Control.Monad.Freer (Eff, Member, send)
+import Control.Monad.Freer ( Eff, Member, send )
 import Control.Monad.Freer.Interpretation
 
 -- | Represents shared immutable environment of type @(e :: *)@ which is made
 -- available to effectful computation.
 data Reader r a where
-  Ask :: Reader r r
+   Ask :: Reader r r
 
 -- | Request a value of the environment.
 ask :: forall r effs. Member (Reader r) effs => Eff effs r
 ask = send Ask
+
 {-# INLINE ask #-}
 
 -- | Request a value of the environment, and apply as selector\/projection
 -- function to it.
-asks
-  :: forall r effs a . Member (Reader r) effs
-  => (r -> a)
-  -- ^ The selector\/projection function to be applied to the environment.
-  -> Eff effs a
+asks :: forall r effs a.
+     Member (Reader r) effs
+     => (r -> a)
+     -- ^ The selector\/projection function to be applied to the environment.
+     -> Eff effs a
 asks f = f <$> ask
+
 {-# INLINE asks #-}
 
 -- | Handler for 'Reader' effects.
@@ -61,16 +59,16 @@ runReader r = interpret (\Ask -> pure r)
 --
 -- This function is like a relay; it is both an admin for 'Reader' requests,
 -- and a requestor of them.
-local
-  :: forall r effs a. Member (Reader r) effs
-  => (r -> r)
-  -> Eff effs a
-  -> Eff effs a
+local :: forall r effs a.
+      Member (Reader r) effs
+      => (r -> r)
+      -> Eff effs a
+      -> Eff effs a
 local f m = do
   r <- asks f
   interpose @(Reader r) (\Ask -> pure r) m
-{-# INLINE local #-}
 
+{-# INLINE local #-}
 -- $simpleReaderExample
 --
 -- In this example the 'Reader' effect provides access to variable bindings.
@@ -109,7 +107,6 @@ local f m = do
 -- > main = putStrLn
 -- >   $ "Count is correct for bindings " ++ show sampleBindings ++ ": "
 -- >   ++ show (isCountCorrect sampleBindings)
-
 -- $localExample
 --
 -- Shows how to modify 'Reader' content with 'local'.
