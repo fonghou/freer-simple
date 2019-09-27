@@ -15,10 +15,10 @@ module Control.Monad.Freer.Error
     ( Error(..)
     , WrappedError(..)
     , throwError
-    , fromEither
-    , runError
-    , mapError
     , catchError
+    , liftEither
+    , mapError
+    , runError
     , handleError
     , unsafeRunError
     ) where
@@ -41,12 +41,12 @@ throwError e = send (Error e)
 {-# INLINE throwError #-}
 
 -- | Upgrade an 'Either' into an 'Error' effect.
-fromEither
+liftEither
    :: forall e effs a. Member (Error e) effs => Either e a -> Eff effs a
-fromEither (Left e) = throwError e
-fromEither (Right a) = pure a
+liftEither (Left e) = throwError e
+liftEither (Right a) = pure a
 
-{-# INLINE fromEither #-}
+{-# INLINE liftEither #-}
 
 -- | Handler for exception effects. If there are no exceptions thrown, returns
 -- 'Right'. If exceptions are thrown and not handled, returns 'Left', while
