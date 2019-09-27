@@ -5,7 +5,6 @@ module Control.Monad.Freer.Fail
     , runFail
     , failToError
     , failToMonad
-    , failToEmbed
     ) where
 
 import Control.Monad.Fail as Fail
@@ -29,14 +28,6 @@ failToError f = interpret $ \(Fail s) -> throwError (f s)
 
 {-# INLINE failToError #-}
 
--- | Run a 'Fail' effect in terms of an underlying 'MonadFail' instance.
-failToEmbed :: forall m r a.
-            (Member (Embed m) r, MonadFail m)
-            => Eff (Fail ': r) a
-            -> Eff r a
-failToEmbed = interpret $ \(Fail s) -> embed @m (Fail.fail s)
-
-{-# INLINE failToEmbed #-}
 {-|
 $doctest
 

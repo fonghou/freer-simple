@@ -188,8 +188,6 @@ module Control.Monad.Freer
     , Members
     , LastMember
       -- ** Sending Arbitrary Effects
-    , Embed(..)
-    , embed
     , send
     , sendM
       -- ** Lifting Effect Stacks
@@ -236,7 +234,6 @@ import Control.Monad.Freer.Internal
        , LastMember
        , Member
        , Members
-       , embed
        , raise
        , raiseUnder
        , raiseUnder2
@@ -258,5 +255,4 @@ import Control.Monad.Freer.Interpretation
        , subsume
        , transform
        )
-import Control.Monad.Freer.Type ( Embed(..) )
 import Control.Natural ( type (~>) )
