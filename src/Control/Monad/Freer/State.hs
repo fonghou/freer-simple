@@ -42,6 +42,7 @@ import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.State.Strict as S
 
 import Data.Proxy ( Proxy )
+import Data.Tuple (swap)
 
 -- | Strict 'State' effects: one can either 'Get' values or 'Put' them.
 data State s r where
@@ -133,3 +134,14 @@ transactState' :: forall s effs a.
 transactState' _ = transactState @s
 
 {-# INLINE transactState' #-}
+
+
+{-# RULES "runState/reinterpret"
+  forall s e (f :: forall x. e x -> Eff (State s ': r) x).
+    runState s (reinterpret f e) = stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
+  #-}
+
+{-# RULES "runState/reinterpret/pointfree"
+  forall s e (f :: forall x. e x -> Eff (State s ': r) x).
+    runState s . reinterpret f $ e = stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
+  #-}

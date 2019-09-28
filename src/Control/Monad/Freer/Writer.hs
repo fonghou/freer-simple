@@ -72,10 +72,7 @@ listen = listens id
 -- |
 pass :: forall w effs a.
      (Monoid w, Member (Writer w) effs)
-     => Eff (Writer w ': effs) ( w
-                                    -> w
-                               , a
-                               )
+     => Eff (Writer w ': effs) ( w -> w , a)
      -> Eff effs a
 pass m = do
   (w, (f, a)) <- runWriter m

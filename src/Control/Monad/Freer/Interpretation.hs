@@ -26,7 +26,7 @@ interpret f (Freer m) = Freer $ \k -> m $ \u ->
   case decomp u of
     Left x -> k x
     Right y -> runFreer (f y) k
-{-# INLINE[3] interpret #-}
+{-# INLINE interpret #-}
 
 
 ------------------------------------------------------------------------------
@@ -35,8 +35,8 @@ stateful
   :: (eff ~> S.StateT s (Eff r))
   -> s
   -> Eff (eff ': r) a -> Eff r (s, a)
-stateful f s (Freer m) = fmap swap $ Freer $ \k ->
-  flip S.runStateT s $ m $ \u ->
+stateful f s (Freer m) = Freer $ \k ->
+  fmap swap $ flip S.runStateT s $ m $ \u ->
     case decomp u of
       Left  x -> lift $ k x
       Right y -> hoist (usingFreer k) $ f y

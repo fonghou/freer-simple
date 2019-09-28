@@ -174,7 +174,7 @@ liftEff u = Freer $ \k -> k u
 -- the 'Eff' monad so that it can be used and handled.
 send :: Member eff effs => eff a -> Eff effs a
 send = liftEff . inj
-{-# INLINE[3] send #-}
+{-# INLINE send #-}
 
 -- | Identical to 'send', but specialized to the final effect in @effs@ to
 -- assist type inference. This is useful for running actions in a monad
