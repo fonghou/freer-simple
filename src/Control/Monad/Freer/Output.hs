@@ -4,6 +4,7 @@ module Control.Monad.Freer.Output
     ( Output(..)
     , output
     , outputToWriter
+    , ignoreOutput
     , runOutputList
     , runOutputMonoid
     , runOutputMonoidAssocR
