@@ -89,8 +89,8 @@ gets f = f <$> get
 -- NB: State tuple (s, a) is swapped from MTL State (a, s)
 runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (s, a)
 runState = stateful stateNat
+{-# INLINE[3] runState #-}
 
-{-# INLINE [3] runState #-}
 stateNat :: State s ~> S.StateT s (Eff r)
 stateNat = \case Get   -> S.get
                  Put s -> S.put s
