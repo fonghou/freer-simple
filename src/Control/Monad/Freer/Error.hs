@@ -24,8 +24,9 @@ module Control.Monad.Freer.Error
     ) where
 
 import qualified Control.Exception as X
-import Control.Monad.Freer ( Eff, Member, send )
+import Control.Monad.Freer ( Eff, LastMember, Member, send )
 import Control.Monad.Freer.Interpretation
+import Control.Monad.IO.Class
 import qualified Control.Monad.Trans.Except as E
 
 import Data.Typeable
@@ -99,8 +100,11 @@ instance (Typeable e) => X.Exception (WrappedError e)
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-unsafeRunError
-   :: (Typeable e, Member IO effs) => Eff (Error e ': effs) a -> Eff effs a
-unsafeRunError = subsume @IO $ \case (Error e) -> X.throwIO $ WrappedError e
+unsafeRunError :: forall e m effs a.
+               (Typeable e, LastMember m effs, MonadIO m)
+               => Eff (Error e ': effs) a
+               -> Eff effs a
+unsafeRunError = subsume @m $ \case
+  (Error e) -> liftIO $ X.throwIO $ WrappedError e
 
 {-# INLINE unsafeRunError #-}
