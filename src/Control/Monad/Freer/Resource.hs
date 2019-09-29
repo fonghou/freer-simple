@@ -90,11 +90,11 @@ runBracket (Freer m) = runResourceT $ m $ \u ->
 
 -- | Run a 'Bracket' effect in terms of 'ResourceT'
 --
--- Also see 'unsafeRunError'
+-- Also see 'errorToExc'
 runResource
   :: forall r. (Eff r ~> Eff '[IO])
     -- ^ Strategy for lowering an effect stack down to [IO].
-    -- This is usually some composition of runA . runB. unsafeRunError.
+    -- This is usually some composition of runA . runB. 'errorToExc'
   -> Bracketed r ~> IO
 runResource f m = runBracket $ liftBracket f m
 {-# INLINE runResource #-}

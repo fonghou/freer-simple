@@ -13,14 +13,14 @@
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Error
     ( Error(..)
-    , WrappedError(..)
+    , ErrorExc(..)
     , throwError
     , catchError
     , liftEither
     , mapError
     , runError
     , handleError
-    , unsafeRunError
+    , errorToExc
     ) where
 
 import qualified Control.Exception as X
@@ -84,15 +84,15 @@ mapError :: forall e1 e2 r a.
          -> Eff (Error e1 ': r) a
          -> Eff r a
 mapError f m = handleError @e1 m $ \e -> throwError (f e)
-
 {-# INLINE mapError #-}
-newtype WrappedError e = WrappedError e
+
+newtype ErrorExc e = ErrorExc e
   deriving ( Typeable )
 
-instance Typeable e => Show (WrappedError e) where
+instance Typeable e => Show (ErrorExc e) where
   show = mappend "WrappedError: " . show . typeRep
 
-instance (Typeable e) => X.Exception (WrappedError e)
+instance (Typeable e) => X.Exception (ErrorExc e)
 
 -- | Run an 'Error' effect as an 'IO' 'X.Exception' through final 'IO'. This
 -- interpretation is significantly faster than 'runError'.
@@ -100,11 +100,10 @@ instance (Typeable e) => X.Exception (WrappedError e)
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-unsafeRunError :: forall e m effs a.
+errorToExc :: forall e m effs a.
                (Typeable e, LastMember m effs, MonadIO m)
                => Eff (Error e ': effs) a
                -> Eff effs a
-unsafeRunError = subsume @m $ \case
-  (Error e) -> liftIO $ X.throwIO $ WrappedError e
-
-{-# INLINE unsafeRunError #-}
+errorToExc = subsume @m $ \case
+  (Error e) -> liftIO $ X.throwIO $ ErrorExc e
+{-# INLINE errorToExc #-}

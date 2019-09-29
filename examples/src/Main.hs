@@ -62,7 +62,7 @@ mainConsoleB = runM (runCapitalize (runConsoleM capitalizingService))
 mainBracket :: IO ()
 mainBracket =
   X.handleAny (\e -> print e) $
-    runResource (unsafeRunError @String . runTrace) $ do
+    runResource (errorToExc @String . runTrace) $ do
       bracket (trace "alloc") (const $ trace "dealloc") $ const $ do
         trace "hi"
         -- _ <- error "die"

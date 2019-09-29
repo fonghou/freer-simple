@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -ddump-rule-rewrites #-}
 module Main (main) where
 
 import Control.Monad (replicateM_)
