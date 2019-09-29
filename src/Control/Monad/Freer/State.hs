@@ -140,8 +140,3 @@ transactState' _ = transactState @s
   forall s e (f :: forall x. e x -> Eff (State s ': r) x).
     runState s (reinterpret f e) = stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
   #-}
-
-{-# RULES "runState/reinterpret/pointfree"
-  forall s e (f :: forall x. e x -> Eff (State s ': r) x).
-    runState s . reinterpret f $ e = stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
-  #-}
