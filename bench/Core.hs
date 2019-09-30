@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -ddump-rule-rewrites #-}
 module Main (main) where
 
 import Control.Monad (replicateM_)
@@ -14,6 +13,9 @@ import Control.Monad.Freer
 import Control.Monad.Freer.Error (runError, throwError)
 import Control.Monad.Freer.State (get, put, runState)
 
+import qualified Polysemy as Poly
+import qualified Polysemy.State as Poly
+import qualified Polysemy.Error as Poly
 --------------------------------------------------------------------------------
                         -- State Benchmarks --
 --------------------------------------------------------------------------------
@@ -24,10 +26,17 @@ oneGet n = run (runState n get)
 oneGetMTL :: Int -> (Int, Int)
 oneGetMTL = MTL.runState MTL.get
 
+oneGetPoly :: Int -> (Int, Int)
+oneGetPoly n = Poly.run (Poly.runState n Poly.get)
+
 
 countDown :: Int -> (Int, Int)
 countDown start = run (runState start go)
   where go = get >>= (\n -> if n <= 0 then pure n else put (n-1) >> go)
+
+countDownPoly :: Int -> (Int, Int)
+countDownPoly start = Poly.run (Poly.runState start go)
+  where go = Poly.get >>= (\n -> if n <= 0 then pure n else Poly.put (n-1) >> go)
 
 countDownMTL :: Int -> (Int, Int)
 countDownMTL = MTL.runState go
@@ -40,6 +49,10 @@ countDownMTL = MTL.runState go
 countDownExc :: Int -> Either String (Int,Int)
 countDownExc start = run $ runError (runState start go)
   where go = get >>= (\n -> if n <= (0 :: Int) then throwError "wat" else put (n-1) >> go)
+
+countDownExcPoly :: Int -> Either String (Int,Int)
+countDownExcPoly start = Poly.run $ Poly.runError (Poly.runState start go)
+  where go = Poly.get >>= (\n -> if n <= (0 :: Int) then Poly.throw "wat" else Poly.put (n-1) >> go)
 
 countDownExcMTL :: Int -> Either String (Int,Int)
 countDownExcMTL = MTL.runStateT go
@@ -123,16 +136,19 @@ main :: IO ()
 main =
   defaultMain [
     bgroup "State" [
-        bench "freer.get"          $ whnf oneGet 0
-      , bench "mtl.get"            $ whnf oneGetMTL 0
+        bench "mtl.get"            $ whnf oneGetMTL 0
+      , bench "freer.get"          $ whnf oneGet 0
+      , bench "polysemy.get"       $ whnf oneGetPoly 0
     ],
     bgroup "Countdown Bench" [
-        bench "freer.State"    $ whnf countDown 10000
-      , bench "mtl.State"      $ whnf countDownMTL 10000
+        bench "mtl.State"      $ whnf countDownMTL 10000
+      , bench "freer.State"    $ whnf countDown 10000
+      , bench "polysemy.State"    $ whnf countDownPoly 10000
     ],
     bgroup "Countdown+Except Bench" [
-        bench "freer.ExcState"  $ whnf countDownExc 10000
-      , bench "mtl.ExceptState" $ whnf countDownExcMTL 10000
+        bench "mtl.ExceptState" $ whnf countDownExcMTL 10000
+      , bench "freer.ExcState"  $ whnf countDownExc 10000
+      , bench "polysemy.ExcState"  $ whnf countDownExcPoly 10000
     ],
     bgroup "HTTP Simple DSL" [
         bench "freer" $ whnf (run . runHttp) prog

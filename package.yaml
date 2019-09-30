@@ -105,9 +105,11 @@ benchmarks:
   core:
     source-dirs: bench
     main: Core.hs
-    ghc-options: -O2
+    ghc-options: -O2 -fplugin=Polysemy.Plugin
     dependencies:
     - criterion
     - free
     - freer-simple
     - mtl
+    - polysemy
+    - polysemy-plugin
