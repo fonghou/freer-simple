@@ -129,15 +129,16 @@ instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
   liftBase = sendM . liftBase
   {-# INLINE liftBase #-}
 
+{-|
 instance (LastMember IO r) => MonadIO (Eff r) where
   liftIO = sendM
   {-# INLINE liftIO #-}
 
-{-|
+-}
+
 instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
   liftIO = sendM . liftIO
   {-# INLINE liftIO #-}
--}
 
 instance MonadTrans Freer where
   lift = liftEff
