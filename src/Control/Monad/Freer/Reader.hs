@@ -22,10 +22,6 @@ module Control.Monad.Freer.Reader
     , runReader
     ) where
 
-    -- * Example 1: Simple Reader Usage
-    -- $simpleReaderExample
-    -- * Example 2: Modifying Reader Content With @local@
-    -- $localExample
 import Control.Monad.Freer ( Eff, Member, send )
 import Control.Monad.Freer.Interpretation
 
