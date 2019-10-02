@@ -177,18 +177,7 @@ decomp :: Union (t ': r) a -> Either (Union r a) (t a)
 decomp (Union 0 a) = Right $ unsafeCoerce a
 decomp (Union n a) = Left $ Union (n - 1) a
 
-{-# INLINE [2] decomp #-}
-
--- | Specialized version of 'decomp' for efficiency.
---
--- /O(1)/
---
--- TODO: Check that it actually adds on efficiency.
-decomp0 :: Union '[t] a -> Either (Union '[] a) (t a)
-decomp0 (Union _ a) = Right $ unsafeCoerce a
-
-{-# INLINE decomp0 #-}
-{-# RULES "decomp/singleton" decomp = decomp0 #-}
+{-# INLINE decomp #-}
 
 -- | Specialised version of 'prj'\/'decomp' that works on an
 -- @'Union' '[t] :: * -> *@ which contains only one specific summand. Hence the
