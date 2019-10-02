@@ -60,21 +60,19 @@ test3 = do
         get
   catchError @String throwing (\_ -> catching)
 
-run3 :: IO ()
+run3 :: String
 run3 = test3
    & runError
    & evalState "Error before State"
    & fmap (either id id)
-   & runM
-   & (print =<<)
+   & run
 
-run3' :: IO ()
+run3' :: String
 run3' = test3
    & evalState "State before Error"
    & runError
    & fmap (either id id)
-   & runM
-   & (print =<<)
+   & run
 
 writer1 :: (String, (String, ()))
 writer1 = run . runWriter $ listen $ tell "yup"

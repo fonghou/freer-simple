@@ -19,13 +19,14 @@ import Control.Monad ( when )
 import Control.Monad.Freer
 import Control.Monad.Freer.State
 import Control.Monad.Freer.Writer
+import Control.Monad.IO.Class
 
 import Data.Bifunctor ( first )
 import Data.IORef
 import Data.Semigroup ( Endo(..) )
 
 data Output o r where
-   Output :: o -> Output o ()
+  Output :: o -> Output o ()
 
 output :: forall o effs. Member (Output o) effs => o -> Eff effs ()
 output = send . Output
@@ -35,8 +36,8 @@ output = send . Output
 ------------------------------------------------------------------------------
 runOutputList :: forall o effs a. Eff (Output o ': effs) a -> Eff effs ([o], a)
 runOutputList = fmap (first reverse)
-   . runState []
-   . reinterpret (\case Output o -> modify' (o:))
+  . runState []
+  . reinterpret (\case Output o -> modify' (o:))
 
 {-# INLINE runOutputList #-}
 
@@ -48,7 +49,7 @@ runOutputMonoid :: forall o m effs a.
                 -> Eff (Output o ': effs) a
                 -> Eff effs (m, a)
 runOutputMonoid f = runState mempty
-   . reinterpret (\case Output o -> modify' (<> f o))
+  . reinterpret (\case Output o -> modify' (<> f o))
 
 {-# INLINE runOutputMonoid #-}
 
@@ -66,8 +67,8 @@ runOutputMonoidAssocR :: forall o m effs a.
                       -> Eff (Output o ': effs) a
                       -> Eff effs (m, a)
 runOutputMonoidAssocR f = fmap (first (`appEndo` mempty))
-   . runOutputMonoid (\o -> let !o' = f o
-                            in Endo (o' <>))
+  . runOutputMonoid (\o -> let !o' = f o
+                           in Endo (o' <>))
 
 {-# INLINE runOutputMonoidAssocR #-}
 
@@ -92,15 +93,15 @@ runOutputBatched :: forall o r a.
 runOutputBatched 0 m = ignoreOutput m
 runOutputBatched size m = do
   ((c, res), a) <- runState (0 :: Int, [] :: [o])
-     $ reinterpret (\case Output o -> do
-                            (count, acc) <- get
-                            let newCount = 1 + count
-                                newAcc = o:acc
-                            if newCount < size
-                               then put (newCount, newAcc)
-                               else do
-                                 output (reverse newAcc)
-                                 put (0 :: Int, [] :: [o])) m
+    $ reinterpret (\case Output o -> do
+                           (count, acc) <- get
+                           let newCount = 1 + count
+                               newAcc = o:acc
+                           if newCount < size
+                             then put (newCount, newAcc)
+                             else do
+                               output (reverse newAcc)
+                               put (0 :: Int, [] :: [o])) m
   when (c > 0) $ output @[o] (reverse res)
   pure a
 
@@ -114,7 +115,7 @@ runOutputEff act = interpret $ \case Output o -> act o
 
 -- | Transform an 'Output' effect into a 'Writer' effect.
 outputToWriter
-   :: Member (Writer o) effs => Eff (Output o ': effs) a -> Eff effs a
+  :: Member (Writer o) effs => Eff (Output o ': effs) a -> Eff effs a
 outputToWriter = interpret $ \case Output o -> tell o
 
 {-# INLINE outputToWriter #-}
@@ -125,29 +126,30 @@ outputToWriter = interpret $ \case Output o -> tell o
 --
 -- @since 1.1.0.0
 runOutputMonoidIORef
-   :: forall o m r a.
-   (Monoid m, LastMember IO r)
-   => IORef m
-   -> (o -> m)
-   -> Eff (Output o ': r) a
-   -> Eff r a
+  :: forall o m t r a.
+  (Monoid m, LastMember t r, MonadIO t)
+  => IORef m
+  -> (o -> m)
+  -> Eff (Output o ': r) a
+  -> Eff r a
 runOutputMonoidIORef ref f = interpret $ \case
-  Output o -> sendM $ atomicModifyIORef' ref (\s -> let !o' = f o
-                                                    in (s <> o', ()))
+  Output o -> sendM $ liftIO $ atomicModifyIORef' ref (\s -> let !o' = f o
+                                                             in (s <> o', ()))
 
 {-# INLINE runOutputMonoidIORef #-}
 
 ------------------------------------------------------------------------------
 -- | Run an 'Output' effect by transforming it into atomic operations
 -- over a 'TVar'.
-runOutputMonoidTVar :: forall o m r a.
-                    (Monoid m, LastMember IO r)
-                    => TVar m
-                    -> (o -> m)
-                    -> Eff (Output o ': r) a
-                    -> Eff r a
+runOutputMonoidTVar
+  :: forall o m t r a.
+  (Monoid m, LastMember t r, MonadIO t)
+  => TVar m
+  -> (o -> m)
+  -> Eff (Output o ': r) a
+  -> Eff r a
 runOutputMonoidTVar tvar f = interpret $ \case
-  Output o -> sendM $ atomically $ do
+  Output o -> sendM $ liftIO $ atomically $ do
     s <- readTVar tvar
     writeTVar tvar $! s <> f o
 

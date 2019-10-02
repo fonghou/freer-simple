@@ -23,6 +23,7 @@ module Control.Monad.Freer.Trace
 
 import Control.Monad.Freer
 import Control.Monad.Freer.Output
+import Control.Monad.IO.Class
 
 import System.IO
 
@@ -37,8 +38,12 @@ trace = send . Trace
 {-# INLINE trace #-}
 
 -- | An 'IO' handler for 'Trace' effects.
-runTrace :: Member IO effs => Eff (Trace ': effs) ~> Eff effs
-runTrace = subsume @IO $ \(Trace s) -> hPutStrLn stderr s
+-- runTrace :: Member IO effs => Eff (Trace ': effs) ~> Eff effs
+-- runTrace = subsume @IO $ \(Trace s) -> hPutStrLn stderr s
+runTrace :: forall m effs.
+         (LastMember m effs, MonadIO m)
+         => Eff (Trace ': effs) ~> Eff effs
+runTrace = subsume @m $ \(Trace s) -> liftIO $ hPutStrLn stderr s
 
 {-# INLINE runTrace #-}
 

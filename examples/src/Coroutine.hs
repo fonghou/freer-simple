@@ -13,7 +13,7 @@ yieldInt i = yield i id
 th1 :: Member (Yield Int ()) r => Eff r ()
 th1 = yieldInt 1 >> yieldInt 2
 
-c1 :: Member IO r => Eff r ()
+c1 :: LastMember IO r => Eff r ()
 c1 = runTrace $ runC th1 >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
@@ -33,7 +33,7 @@ th2 :: (Member (Yield Int ()) r, Member (Reader Int) r) => Eff r ()
 th2 = ask >>= yieldInt >> (ask >>= yieldInt)
 
 -- Code is essentially the same as in transf.hs; no liftIO though
-c2 :: Member IO r => Eff r ()
+c2 :: LastMember IO r => Eff r ()
 c2 = runTrace $ runReader (10::Int) (loop =<< runC th2)
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
@@ -44,7 +44,7 @@ Done
 -}
 
 -- locally changing the dynamic environment for the suspension
-c21 :: Member IO r => Eff r ()
+c21 :: LastMember IO r => Eff r ()
 c21 = runTrace $ runReader (10::Int) (loop =<< runC th2)
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
@@ -59,7 +59,7 @@ th3 :: (Member (Yield Int ()) r, Member (Reader Int) r) => Eff r ()
 th3 = ay >> ay >> local (+(10::Int)) (ay >> ay)
  where ay = ask >>= yieldInt
 
-c3 :: Member IO r => Eff r ()
+c3 :: LastMember IO r => Eff r ()
 c3 = runTrace $ runReader (10::Int) (loop =<< runC th3)
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)   = trace "Done"
@@ -72,7 +72,7 @@ Done
 -}
 
 -- locally changing the dynamic environment for the suspension
-c31 :: Member IO r => Eff r ()
+c31 :: LastMember IO r => Eff r ()
 c31 = runTrace $ runReader  (10::Int) (loop =<< runC th3)
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
@@ -89,7 +89,7 @@ Done
 
 -- We now make explicit that the client computation, run by th4,
 -- is abstract. We abstract it out of th4
-c4 :: Member IO r => Eff r ()
+c4 :: LastMember IO r => Eff r ()
 c4 = runTrace $ runReader (10::Int) (loop =<< runC (th4 client))
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
@@ -108,7 +108,7 @@ Done
 -}
 
 -- Even more dynamic example
-c5 :: Member IO r => Eff r ()
+c5 :: LastMember IO r => Eff r ()
 c5 = runTrace $ runReader (10::Int) (loop =<< runC (th client))
  where loop (Continue x k) = trace (show (x::Int)) >> local (\_->x+1) (k ()) >>= loop
        loop (Done _)   = trace $ "Done"
@@ -140,7 +140,7 @@ Done
 -}
 
 -- And even more
-c7 :: Member IO r => Eff r ()
+c7 :: LastMember IO r => Eff r ()
 c7 = runTrace . runReader (1000::Double) . runReader (10::Int)
    $ runC (th client) >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >>
@@ -181,7 +181,7 @@ c7 = runTrace . runReader (1000::Double) . runReader (10::Int)
 Done
 -}
 
-c7' :: Member IO r => Eff r ()
+c7' :: LastMember IO r => Eff r ()
 c7' = runTrace . runReader (1000::Double) . runReader (10::Int)
     $ runC (th client) >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >>
