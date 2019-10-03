@@ -17,6 +17,7 @@ module Control.Monad.Freer.Error
     , throwError
     , catchError
     , liftEither
+    , liftEitherM
     , mapError
     , runError
     , handleError
@@ -24,7 +25,8 @@ module Control.Monad.Freer.Error
     ) where
 
 import qualified Control.Exception as X
-import Control.Monad.Freer ( Eff, LastMember, Member, send )
+import Control.Monad
+import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
 import Control.Monad.IO.Class
 import qualified Control.Monad.Trans.Except as E
@@ -41,13 +43,22 @@ throwError e = send (Error e)
 
 {-# INLINE throwError #-}
 
--- | Upgrade an 'Either' into an 'Error' effect.
+-- | Lift  an 'Either' into an 'Error' effect.
 liftEither
   :: forall e effs a. Member (Error e) effs => Either e a -> Eff effs a
 liftEither (Left e) = throwError e
 liftEither (Right a) = pure a
 
 {-# INLINE liftEither #-}
+
+-- | Lift an 'Either' from the final monad into an 'Error' effect.
+liftEitherM :: forall e m effs a.
+            (Member (Error e) effs, LastMember m effs, Monad m)
+            => m (Either e a)
+            -> Eff effs a
+liftEitherM = liftEither <=< sendM
+
+{-# INLINE liftEitherM #-}
 
 -- | Handler for exception effects. If there are no exceptions thrown, returns
 -- 'Right'. If exceptions are thrown and not handled, returns 'Left', while
