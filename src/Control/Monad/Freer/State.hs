@@ -42,12 +42,12 @@ import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.State.Strict as S
 
 import Data.Proxy ( Proxy )
-import Data.Tuple (swap)
+import Data.Tuple ( swap )
 
 -- | Strict 'State' effects: one can either 'Get' values or 'Put' them.
 data State s r where
-   Get :: State s s
-   Put :: !s -> State s ()
+  Get :: State s s
+  Put :: !s -> State s ()
 
 -- | Retrieve the current value of the state of type @s :: *@.
 get :: forall s effs. Member (State s) effs => Eff effs s
@@ -90,8 +90,8 @@ gets f = f <$> get
 -- NB: State tuple (s, a) is swapped from MTL State (a, s)
 runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (s, a)
 runState = stateful stateNat
-{-# INLINE[3] runState #-}
 
+{-# INLINE [3] runState #-}
 stateNat :: State s ~> S.StateT s (Eff r)
 stateNat = \case Get   -> S.get
                  Put s -> S.put s
@@ -117,7 +117,7 @@ evalState s = fmap snd . runState s
 -- specified explicitly with @TypeApplications@. Alternatively, it can be
 -- specified by supplying a 'Proxy' to 'transactState''.
 transactState
-   :: forall s effs a. Member (State s) effs => Eff effs a -> Eff effs a
+  :: forall s effs a. Member (State s) effs => Eff effs a -> Eff effs a
 transactState m = do
   s0 <- get @s
   (s, x) <- interposeState stateNat s0 m
@@ -134,9 +134,8 @@ transactState' :: forall s effs a.
 transactState' _ = transactState @s
 
 {-# INLINE transactState' #-}
-
-
-{-# RULES "runState/reinterpret"
-  forall s e (f :: forall x. e x -> Eff (State s ': r) x).
-    runState s (reinterpret f e) = stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
-  #-}
+{-# RULES "runState/reinterpret" forall s e (f :: forall x.
+                                               e x
+                                               -> Eff (State s ': r) x).
+          runState s (reinterpret f e) =
+          stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e #-}

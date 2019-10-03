@@ -230,29 +230,9 @@ module Control.Monad.Freer
     ) where
 
 import Control.Monad.Freer.Internal
-       ( Eff
-       , LastMember
-       , Member
-       , Members
-       , raise
-       , raiseUnder
-       , raiseUnder2
-       , raiseUnder3
-       , raiseUnder4
-       , run
-       , runM
-       , send
-       , sendM
-       )
+       ( Eff, LastMember, Member, Members, raise, raiseUnder, raiseUnder2
+       , raiseUnder3, raiseUnder4, run, runM, send, sendM )
 import Control.Monad.Freer.Interpretation
-       ( interpose
-       , interposeState
-       , interpret
-       , reinterpret
-       , reinterpret2
-       , reinterpret3
-       , reinterpret4
-       , subsume
-       , transform
-       )
+       ( interpose, interposeState, interpret, reinterpret, reinterpret2
+       , reinterpret3, reinterpret4, subsume, transform )
 import Control.Natural ( type (~>) )

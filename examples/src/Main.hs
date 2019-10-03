@@ -8,7 +8,7 @@ import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
 import System.Environment (getArgs)
 
-import Control.Monad.Freer (Eff, Member, runM, send)
+import Control.Monad.Freer (Eff, Member, runM)
 import Control.Monad.Freer.Resource
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Trace

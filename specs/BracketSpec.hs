@@ -9,30 +9,29 @@ import Control.Monad.Freer.Trace
 
 import Test.Hspec
 
-test :: IO Int
-test = X.handle (\(ErrorExc (e :: String)) -> print e >> return 0)
-   $ runResource lower
-   $ do
-     bracket (trace "Before" >> return "!!!") (\b -> trace $ "After " <> b)
-        $ \b -> do
-          trace $ "Begin " <> b
-          i <- input @Int
-          x <- input @String
-          output $ "input is: " <> x
-          let ex = mapError @Bool show (throwError False)
-          handleError @String ex $ \e -> return e >>= trace . ("Error is " <>)
-          _ <- throwError $ "DIE"
-          trace "End"
-          return (i + 10)
-  where
-    lower = runTrace
-       -- . runTraceList
-       . errorToExc @String
-       . errorToExc @Bool
-       . outputToTrace @String
-       -- . runOutputList @String
-       . runInputConst "hello"
-       . runInputConst @Int 1
-
 spec :: Spec
 spec = return ()
+
+test :: IO Int
+test = X.handle (\(ErrorExc (e :: String)) -> print e >> return 0)
+  $ runResource lower
+  $ do
+    bracket (trace "Before" >> return "!!!") (\b -> trace $ "After " <> b)
+      $ \b -> do
+        trace $ "Begin " <> b
+        i <- input @Int
+        x <- input @String
+        output $ "input is: " <> x
+        let ex = mapError @Bool show (throwError False)
+        handleError @String ex $ \e -> return e >>= trace . ("Error is " <>)
+        _ <- throwError $ "DIE"
+        trace "End"
+        return (i + 10)
+  where
+    lower = runTrace
+      -- . runTraceList
+      . errorToExc @String
+      . outputToTrace @String
+      -- . runOutputList @String
+      . runInputConst "hello"
+      . runInputConst @Int 1

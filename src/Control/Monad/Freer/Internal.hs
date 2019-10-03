@@ -1,14 +1,13 @@
-{-# OPTIONS_GHC -Wno-redundant-constraints #-} -- Due to sendM.
-{-# OPTIONS_HADDOCK not-home #-}
-
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TypeFamilies #-}
-
 -- The following is needed to define MonadPlus instance. It is decidable
 -- (there is no recursion!), but GHC cannot see that.
 --
 -- TODO: Remove once GHC can deduce the decidability of this instance.
 {-# LANGUAGE UndecidableInstances #-}
+
+{-# OPTIONS_GHC -Wno-redundant-constraints #-} -- Due to sendM.
+{-# OPTIONS_HADDOCK not-home #-}
 
 -- |
 -- Module:       Control.Monad.Freer.Internal
@@ -27,51 +26,44 @@
 --
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Internal
-  ( -- * Effect Monad
-    Freer (..)
-  , usingFreer
-  , type Eff
+    ( -- * Effect Monad
+      Freer(..)
+    , usingFreer
+    , type Eff
+      -- ** Open Union
+      --
+      -- | Open Union (type-indexed co-product) of effects.
+    , module Data.OpenUnion
+      -- ** Natural Transformations
+    , type (~>)
+      -- ** Sending Arbitrary Effect
+    , send
+    , sendM
+      -- ** Lifting Effect Stacks
+    , raise
+    , raiseUnder
+    , raiseUnder2
+    , raiseUnder3
+    , raiseUnder4
+    , liftEff
+    , hoistEff
+      -- * Handling Effects
+    , run
+    , runM
+      -- * MonadFail
+    , Fail(..)
+    ) where
 
-    -- ** Open Union
-    --
-    -- | Open Union (type-indexed co-product) of effects.
-  , module Data.OpenUnion
-
-    -- ** Natural Transformations
-  , type (~>)
-
-    -- ** Sending Arbitrary Effect
-  , send
-  , sendM
-
-    -- ** Lifting Effect Stacks
-  , raise
-  , raiseUnder
-  , raiseUnder2
-  , raiseUnder3
-  , raiseUnder4
-  , liftEff
-  , hoistEff
-
-    -- * Handling Effects
-  , run
-  , runM
-
-    -- * MonadFail
-  , Fail (..)
-  ) where
-
-import Control.Monad.Base (MonadBase, liftBase)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Base ( MonadBase, liftBase )
 import Control.Monad.Fail
-import Control.Monad.Morph (MFunctor (..))
-import Control.Monad.Trans.Class (MonadTrans (..))
-import Control.Natural (type (~>))
-import Data.Functor.Identity (Identity (..))
+import Control.Monad.IO.Class ( MonadIO, liftIO )
+import Control.Monad.Morph ( MFunctor(..) )
+import Control.Monad.Trans.Class ( MonadTrans(..) )
+import Control.Natural ( type (~>) )
 
+import Data.Functor.Identity ( Identity(..) )
 import Data.OpenUnion
 import Data.OpenUnion.Internal
-
 
 -- | The 'Eff' monad provides the implementation of a computation that performs
 -- an arbitrary set of algebraic effects. In @'Eff' effs a@, @effs@ is a
@@ -99,34 +91,34 @@ import Data.OpenUnion.Internal
 -- order.
 type Eff r = Freer (Union r)
 
-newtype Freer f a = Freer
-  { runFreer :: forall m. Monad m => (f ~> m) -> m a
-  }
+newtype Freer f a = Freer { runFreer :: forall m. Monad m => (f ~> m) -> m a }
 
 instance Functor (Freer f) where
   fmap f (Freer m) = Freer $ \k -> fmap f $ m k
-  {-# INLINE fmap #-}
 
+  {-# INLINE fmap #-}
 
 instance Applicative (Freer f) where
   pure a = Freer $ const $ pure a
+
   {-# INLINE pure #-}
-
   Freer f <*> Freer a = Freer $ \k -> f k <*> a k
-  {-# INLINE (<*>) #-}
 
+  {-# INLINE (<*>) #-}
 
 instance Monad (Freer f) where
   return = pure
-  {-# INLINE return #-}
 
+  {-# INLINE return #-}
   Freer ma >>= f = Freer $ \k -> do
     z <- ma k
     runFreer (f z) k
+
   {-# INLINE (>>=) #-}
 
 instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
   liftBase = sendM . liftBase
+
   {-# INLINE liftBase #-}
 
 {-|
@@ -135,39 +127,37 @@ instance (LastMember IO r) => MonadIO (Eff r) where
   {-# INLINE liftIO #-}
 
 -}
-
 instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
   liftIO = sendM . liftIO
+
   {-# INLINE liftIO #-}
 
 instance MonadTrans Freer where
   lift = liftEff
 
-
 instance MFunctor Freer where
   hoist = hoistEff
-
 
 newtype Fail a = Fail String
 
 instance (Member Fail r) => MonadFail (Eff r) where
   fail = send . Fail
-  {-# INLINE fail #-}
 
+  {-# INLINE fail #-}
 
 ------------------------------------------------------------------------------
 -- | Run a natural transformation over `Freer`.
 hoistEff :: (f ~> g) -> Freer f ~> Freer g
 hoistEff nat (Freer m) = Freer $ \k -> m $ k . nat
-{-# INLINE hoistEff #-}
 
+{-# INLINE hoistEff #-}
 
 -- | Lift a value into 'Freer'. When 'f' is 'Union', this specializes as
 -- @Union -- r x -> Eff r x@
 liftEff :: f x -> Freer f x
 liftEff u = Freer $ \k -> k u
-{-# INLINE liftEff #-}
 
+{-# INLINE liftEff #-}
 
 -- | “Sends” an effect, which should be a value defined as part of an effect
 -- algebra (see the module documentation for "Control.Monad.Freer"), to an
@@ -175,6 +165,7 @@ liftEff u = Freer $ \k -> k u
 -- the 'Eff' monad so that it can be used and handled.
 send :: Member eff effs => eff a -> Eff effs a
 send = liftEff . inj
+
 {-# INLINE send #-}
 
 -- | Identical to 'send', but specialized to the final effect in @effs@ to
@@ -182,13 +173,12 @@ send = liftEff . inj
 -- transformer stack used in conjunction with 'runM'.
 sendM :: (Monad m, LastMember m effs) => m a -> Eff effs a
 sendM = send
-{-# INLINE sendM #-}
 
+{-# INLINE sendM #-}
 
 --------------------------------------------------------------------------------
                        -- Base Effect Runner --
 --------------------------------------------------------------------------------
-
 -- | Runs a pure 'Eff' computation, since an 'Eff' computation that performs no
 -- effects (i.e. has no effects in its type-level list) is guaranteed to be
 -- pure. This is usually used as the final step of running an effectful
@@ -205,6 +195,7 @@ sendM = send
 -- @
 run :: Eff '[Identity] a -> a
 run = runIdentity . runM
+
 {-# INLINE run #-}
 
 -- | Like 'run', 'runM' runs an 'Eff' computation and extracts the result.
@@ -214,6 +205,7 @@ run = runIdentity . runM
 -- in traditional transformer stacks.
 runM :: Monad m => Eff '[m] a -> m a
 runM = usingFreer extract
+
 {-# INLINE runM #-}
 
 -- | @'flip' 'runFreer'@
@@ -224,6 +216,7 @@ usingFreer k m = runFreer m k
 -- MTL's 'lift'.
 raise :: Eff effs a -> Eff (e ': effs) a
 raise = hoistEff weaken
+
 {-# INLINE raise #-}
 
 ------------------------------------------------------------------------------
@@ -234,16 +227,17 @@ raise = hoistEff weaken
 -- Also see 'reinterpret'.
 raiseUnder :: Eff (eff ': r) a -> Eff (eff ': u ': r) a
 raiseUnder = hoistEff intro1
-{-# INLINE raiseUnder #-}
 
+{-# INLINE raiseUnder #-}
 raiseUnder2 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': r) a
 raiseUnder2 = hoistEff intro2
-{-# INLINE raiseUnder2 #-}
 
+{-# INLINE raiseUnder2 #-}
 raiseUnder3 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': r) a
 raiseUnder3 = hoistEff intro3
-{-# INLINE raiseUnder3 #-}
 
-raiseUnder4 :: Eff (eff ': r) a -> Eff (eff ': u ': v ':x ': y ': r) a
+{-# INLINE raiseUnder3 #-}
+raiseUnder4 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': y ': r) a
 raiseUnder4 = hoistEff intro4
+
 {-# INLINE raiseUnder4 #-}

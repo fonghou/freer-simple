@@ -33,7 +33,7 @@ import Data.Typeable
 
 -- | Exceptions of the type @e :: *@ with no resumption.
 newtype Error e r where
-   Error :: e -> Error e r
+  Error :: e -> Error e r
 
 -- | Throws an error carrying information of type @e :: *@.
 throwError :: forall e effs a. Member (Error e) effs => e -> Eff effs a
@@ -43,7 +43,7 @@ throwError e = send (Error e)
 
 -- | Upgrade an 'Either' into an 'Error' effect.
 liftEither
-   :: forall e effs a. Member (Error e) effs => Either e a -> Eff effs a
+  :: forall e effs a. Member (Error e) effs => Either e a -> Eff effs a
 liftEither (Left e) = throwError e
 liftEither (Right a) = pure a
 
@@ -84,8 +84,8 @@ mapError :: forall e1 e2 r a.
          -> Eff (Error e1 ': r) a
          -> Eff r a
 mapError f m = handleError @e1 m $ \e -> throwError (f e)
-{-# INLINE mapError #-}
 
+{-# INLINE mapError #-}
 newtype ErrorExc e = ErrorExc e
   deriving ( Typeable )
 
@@ -101,9 +101,9 @@ instance (Typeable e) => X.Exception (ErrorExc e)
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
 errorToExc :: forall e m effs a.
-               (Typeable e, LastMember m effs, MonadIO m)
-               => Eff (Error e ': effs) a
-               -> Eff effs a
-errorToExc = subsume @m $ \case
-  (Error e) -> liftIO $ X.throwIO $ ErrorExc e
+           (Typeable e, LastMember m effs, MonadIO m)
+           => Eff (Error e ': effs) a
+           -> Eff effs a
+errorToExc = subsume @m $ \case (Error e) -> liftIO $ X.throwIO $ ErrorExc e
+
 {-# INLINE errorToExc #-}

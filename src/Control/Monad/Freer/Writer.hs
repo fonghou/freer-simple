@@ -32,7 +32,7 @@ import Data.Monoid ( (<>) )
 
 -- | Writer effects - send outputs to an effect environment.
 data Writer w r where
-   Tell :: w -> Writer w ()
+  Tell :: w -> Writer w ()
 
 -- | Send a change to the attached environment.
 tell :: forall w effs. Member (Writer w) effs => w -> Eff effs ()
@@ -43,7 +43,7 @@ tell w = send (Tell w)
 -- | Simple handler for 'Writer' effects.
 -- NB: Writer tuple (w, a) is swapped from MTL (a, w)
 runWriter
-   :: forall w effs a. Monoid w => Eff (Writer w ': effs) a -> Eff effs (w, a)
+  :: forall w effs a. Monoid w => Eff (Writer w ': effs) a -> Eff effs (w, a)
 runWriter = stateful (\(Tell w) -> modify' (<> w)) mempty
 
 listens :: forall w effs a b.
@@ -72,7 +72,10 @@ listen = listens id
 -- |
 pass :: forall w effs a.
      (Monoid w, Member (Writer w) effs)
-     => Eff (Writer w ': effs) ( w -> w , a)
+     => Eff (Writer w ': effs) ( w
+                                   -> w
+                               , a
+                               )
      -> Eff effs a
 pass m = do
   (w, (f, a)) <- runWriter m

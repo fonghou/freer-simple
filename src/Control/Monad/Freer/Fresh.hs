@@ -11,15 +11,9 @@
 -- implementing De Bruijn naming/scopes.
 --
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
+module Control.Monad.Freer.Fresh ( Fresh(..), fresh, runFresh, evalFresh ) where
 
-module Control.Monad.Freer.Fresh
-  ( Fresh(..)
-  , fresh
-  , runFresh
-  , evalFresh
-  ) where
-
-import Control.Monad.Freer.Internal (Eff, Member, send)
+import Control.Monad.Freer.Internal ( Eff, Member, send )
 import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.State.Strict as S
 
@@ -34,7 +28,7 @@ fresh = send Fresh
 -- | Handler for 'Fresh' effects, with an 'Int' for a starting value. The
 -- return value includes the next fresh value.
 runFresh :: Int -> Eff (Fresh ': effs) a -> Eff effs (Int, a)
-runFresh = stateful $ \Fresh -> S.get <* S.modify (+1)
+runFresh = stateful $ \Fresh -> S.get <* S.modify (+ 1)
 
 -- | Handler for 'Fresh' effects, with an 'Int' for a starting value. Discards
 -- the next fresh value.

@@ -14,33 +14,23 @@
 -- Open unions (type-indexed co-products, i.e. type-indexed sums) for
 -- extensible effects All operations are constant-time.
 module Data.OpenUnion
-  ( -- * Open Union
-    Union
+    ( -- * Open Union
+      Union
+      -- * Open Union Operations
+    , Weakens(..)
+    , (:++:)
+    , decomp
+    , weaken
+    , extract
+      -- * Open Union Membership Constraints
+    , Member(..)
+    , Members
+    , LastMember
+    ) where
 
-    -- * Open Union Operations
-  , Weakens(..)
-  , (:++:)
-  , decomp
-  , weaken
-  , extract
-
-    -- * Open Union Membership Constraints
-  , Member(..)
-  , Members
-  , LastMember
-  ) where
-
-import Data.Kind (Constraint)
-
-import Data.OpenUnion.Internal
-  ( Member(inj, prj)
-  , Union
-  , Weakens(weakens)
-  , (:++:)
-  , decomp
-  , extract
-  , weaken
-  )
+import Data.Kind ( Constraint )
+import Data.OpenUnion.Internal ( (:++:), Member(inj, prj), Union
+                               , Weakens(weakens), decomp, extract, weaken )
 
 -- | A shorthand constraint that represents a combination of multiple 'Member'
 -- constraints. That is, the following 'Members' constraint:
@@ -71,5 +61,7 @@ type family Members effs effs' :: Constraint where
 -- 'Control.Monad.Base.liftBase' to embed ordinary monadic effects within an
 -- 'Control.Monad.Freer.Eff' computation.
 class Member m effs => LastMember m effs | effs -> m
-instance {-# OVERLAPPABLE #-} LastMember m effs => LastMember m (eff ': effs)
+
+instance {-# OVERLAPPABLE #-}LastMember m effs => LastMember m (eff ': effs)
+
 instance LastMember m (m ': '[])

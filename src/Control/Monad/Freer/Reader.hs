@@ -28,7 +28,7 @@ import Control.Monad.Freer.Interpretation
 -- | Represents shared immutable environment of type @(e :: *)@ which is made
 -- available to effectful computation.
 data Reader r a where
-   Ask :: Reader r r
+  Ask :: Reader r r
 
 -- | Request a value of the environment.
 ask :: forall r effs. Member (Reader r) effs => Eff effs r

@@ -1,11 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
-module Control.Monad.Freer.Fail
-    ( Fail(..)
-    , runFail
-    , failToError
-    , failToMonad
-    ) where
+module Control.Monad.Freer.Fail ( Fail(..), runFail, failToError, failToMonad ) where
 
 import Control.Monad.Fail as Fail
 import Control.Monad.Freer
@@ -23,10 +18,11 @@ failToMonad :: forall m r a.
 failToMonad = interpret $ \(Fail s) -> sendM @m (Fail.fail s)
 
 failToError
-   :: Member (Error e) r => (String -> e) -> Eff (Fail ': r) a -> Eff r a
+  :: Member (Error e) r => (String -> e) -> Eff (Fail ': r) a -> Eff r a
 failToError f = interpret $ \(Fail s) -> throwError (f s)
 
 {-# INLINE failToError #-}
+
 
 {-|
 $doctest

@@ -29,7 +29,7 @@ import System.IO
 
 -- | A Trace effect; takes a 'String' and performs output.
 data Trace a where
-   Trace :: String -> Trace ()
+  Trace :: String -> Trace ()
 
 -- | Printing a string in a trace.
 trace :: Member Trace effs => String -> Eff effs ()

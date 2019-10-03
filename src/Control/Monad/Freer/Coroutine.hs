@@ -11,17 +11,16 @@
 --
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Coroutine
-  ( -- * Yield Control
-    Yield(..)
-  , yield
+    ( -- * Yield Control
+      Yield(..)
+    , yield
+      -- * Handle Yield Effect
+    , Status(..)
+    , runC
+    , interceptC
+    ) where
 
-    -- * Handle Yield Effect
-  , Status(..)
-  , runC
-  , interceptC
-  ) where
-
-import Control.Monad.Freer.Internal (Eff, Member, send)
+import Control.Monad.Freer.Internal ( Eff, Member, send )
 import Control.Monad.Freer.Interpretation
 
 -- | A type representing a yielding of control.
@@ -37,7 +36,7 @@ import Control.Monad.Freer.Interpretation
 -- [@c@]
 --   The output of the continuation.
 data Yield a b c = Yield a (b -> c)
-  deriving (Functor)
+  deriving ( Functor )
 
 -- | Lifts a value and a function into the Coroutine effect.
 yield :: Member (Yield a b) effs => a -> (b -> c) -> Eff effs c
@@ -46,16 +45,15 @@ yield x f = send (Yield x f)
 -- | Represents status of a coroutine.
 data Status effs a b r
   = Done r
-  -- ^ Coroutine is done with a result value of type @r@.
+    -- ^ Coroutine is done with a result value of type @r@.
   | Continue a (b -> Eff effs (Status effs a b r))
-  -- ^ Reporting a value of the type @a@, and resuming with the value of type
-  -- @b@, possibly ending with a value of type @r@.
+-- ^ Reporting a value of the type @a@, and resuming with the value of type
+-- @b@, possibly ending with a value of type @r@.
 
 -- | Reply to a coroutine effect by returning the Continue constructor.
-resumeC
-  :: Yield a b c
-  -> (c -> Eff effs (Status effs a b r))
-  -> Eff effs (Status effs a b r)
+resumeC :: Yield a b c
+        -> (c -> Eff effs (Status effs a b r))
+        -> Eff effs (Status effs a b r)
 resumeC (Yield a k) arr = pure $ Continue a (arr . k)
 
 -- | Launch a coroutine and report its status.
@@ -65,7 +63,5 @@ runC = relay (pure . Done) resumeC
 -- | Launch a coroutine and report its status, without handling (removing)
 -- 'Yield' from the typelist. This is useful for reducing nested coroutines.
 interceptC
-  :: Member (Yield a b) effs
-  => Eff effs r
-  -> Eff effs (Status effs a b r)
+  :: Member (Yield a b) effs => Eff effs r -> Eff effs (Status effs a b r)
 interceptC = interposeRelay (pure . Done) resumeC
