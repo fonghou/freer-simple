@@ -34,13 +34,13 @@ test mb = do
   pure b
 :}
 
->>> runM @[] . failToMonad $ test Nothing
+>>> runM . failToMonad @[] $ test Nothing
 []
 
->>> runM @Maybe . failToMonad $ test Nothing
+>>> runM . failToMonad @Maybe $ test Nothing
 Nothing
 
->>> runM @Maybe . failToMonad $ test (Just False)
+>>> runM . failToMonad @Maybe $ test (Just False)
 Just False
 
 >>> run . runError @String . failToError id $ test Nothing

@@ -23,7 +23,7 @@ test = X.handle (\(ErrorExc (e :: String)) -> print e >> return 0)
         x <- input @String
         output $ "input is: " <> x
         let ex = mapError @Bool show (throwError False)
-        handleError @String ex $ \e -> return e >>= trace . ("Error is " <>)
+        handleError @String ex $ \e -> return e >>= output . ("Error is " <>)
         _ <- throwError $ "DIE"
         trace "End"
         return (i + 10)
