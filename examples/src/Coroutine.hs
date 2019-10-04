@@ -1,4 +1,4 @@
-module Coroutine () where
+module Coroutine where
 
 import Control.Monad.Freer
 import Control.Monad.Freer.Coroutine
@@ -14,7 +14,7 @@ th1 :: Member (Yield Int ()) r => Eff r ()
 th1 = yieldInt 1 >> yieldInt 2
 
 c1 :: Eff '[IO] ()
-c1 = runTrace $ runC th1 >>= loop
+c1 = runTraceIO $ runC th1 >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
 {-
@@ -34,7 +34,7 @@ th2 = ask >>= yieldInt >> (ask >>= yieldInt)
 
 -- Code is essentially the same as in transf.hs; no liftIO though
 c2 :: Eff '[IO] ()
-c2 = runTrace $ runReader (10::Int) (loop =<< runC th2)
+c2 = runTraceIO $ runReader (10::Int) (loop =<< runC th2)
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
 {-
@@ -45,7 +45,7 @@ Done
 
 -- locally changing the dynamic environment for the suspension
 c21 :: Eff '[IO] ()
-c21 = runTrace $ runReader (10::Int) (loop =<< runC th2)
+c21 = runTraceIO $ runReader (10::Int) (loop =<< runC th2)
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
 {-
@@ -60,7 +60,7 @@ th3 = ay >> ay >> local (+(10::Int)) (ay >> ay)
  where ay = ask >>= yieldInt
 
 c3 :: Eff '[IO] ()
-c3 = runTrace $ runReader (10::Int) (loop =<< runC th3)
+c3 = runTraceIO $ runReader (10::Int) (loop =<< runC th3)
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)   = trace "Done"
 {-
@@ -73,7 +73,7 @@ Done
 
 -- locally changing the dynamic environment for the suspension
 c31 :: Eff '[IO] ()
-c31 = runTrace $ runReader  (10::Int) (loop =<< runC th3)
+c31 = runTraceIO $ runReader  (10::Int) (loop =<< runC th3)
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
 {-
@@ -90,7 +90,7 @@ Done
 -- We now make explicit that the client computation, run by th4,
 -- is abstract. We abstract it out of th4
 c4 :: Eff '[IO] ()
-c4 = runTrace $ runReader (10::Int) (loop =<< runC (th4 client))
+c4 = runTraceIO $ runReader (10::Int) (loop =<< runC (th4 client))
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
 
@@ -109,7 +109,7 @@ Done
 
 -- Even more dynamic example
 c5 :: Eff '[IO] ()
-c5 = runTrace $ runReader (10::Int) (loop =<< runC (th client))
+c5 = runTraceIO $ runReader (10::Int) (loop =<< runC (th client))
  where loop (Continue x k) = trace (show (x::Int)) >> local (\_->x+1) (k ()) >>= loop
        loop (Done _)   = trace $ "Done"
 
@@ -141,7 +141,7 @@ Done
 
 -- And even more
 c7 :: Eff '[IO] ()
-c7 = runTrace . runReader (1000::Double) . runReader (10::Int)
+c7 = runTraceIO . runReader (1000::Double) . runReader (10::Int)
    $ runC (th client) >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >>
                       local (\_->fromIntegral (x+1)::Double) (k ()) >>= loop
@@ -182,7 +182,7 @@ Done
 -}
 
 c7' :: Eff '[IO] ()
-c7' = runTrace . runReader (1000::Double) . runReader (10::Int)
+c7' = runTraceIO . runReader (1000::Double) . runReader (10::Int)
     $ runC (th client) >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >>
                       local (\_->fromIntegral (x+1)::Double) (k ()) >>= loop

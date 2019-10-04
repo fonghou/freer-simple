@@ -15,6 +15,7 @@ module Control.Monad.Freer.Trace
     ( Trace(..)
     , trace
     , runTrace
+    , runTraceIO
     , runTraceList
     , ignoreTrace
     , traceToOutput
@@ -25,7 +26,7 @@ import Control.Monad.Freer
 import Control.Monad.Freer.Output
 import Control.Monad.IO.Class
 
-import System.IO
+import qualified Debug.Trace as Debug
 
 -- | A Trace effect; takes a 'String' and performs output.
 data Trace a where
@@ -38,12 +39,16 @@ trace = send . Trace
 {-# INLINE trace #-}
 
 -- | An 'IO' handler for 'Trace' effects.
--- runTrace :: Member IO effs => Eff (Trace ': effs) ~> Eff effs
--- runTrace = subsume @IO $ \(Trace s) -> hPutStrLn stderr s
-runTrace :: forall m effs.
-         (LastMember m effs, MonadIO m)
-         => Eff (Trace ': effs) ~> Eff effs
-runTrace = subsume @m $ \(Trace s) -> liftIO $ hPutStrLn stderr s
+runTraceIO :: forall m effs.
+           (LastMember m effs, MonadIO m)
+           => Eff (Trace ': effs) ~> Eff effs
+runTraceIO = subsume @m $ \(Trace s) -> liftIO $ Debug.traceIO s
+
+{-# INLINE runTraceIO #-}
+
+-- | Run a 'Trace' effect by Debug.Trace.traceStack.
+runTrace :: Eff (Trace ': effs) ~> Eff effs
+runTrace = interpret $ \case Trace s -> pure $ Debug.traceStack s ()
 
 {-# INLINE runTrace #-}
 
@@ -55,18 +60,18 @@ ignoreTrace = interpret $ \case Trace _ -> pure ()
 {-# INLINE ignoreTrace #-}
 
 ------------------------------------------------------------------------------
--- | Transform a 'Trace' effect into a 'Output' 'String' effect.
-traceToOutput :: Member (Output String) effs => Eff (Trace ': effs) ~> Eff effs
-traceToOutput = interpret $ \case Trace m -> output m
-
-{-# INLINE traceToOutput #-}
-
-------------------------------------------------------------------------------
 -- | Get the result of a 'Trace' effect as a list of 'String's.
 runTraceList :: Eff (Trace ': r) a -> Eff r ([String], a)
 runTraceList = runOutputList . reinterpret (\case Trace m -> output m)
 
 {-# INLINE runTraceList #-}
+
+------------------------------------------------------------------------------
+-- | Transform a 'Trace' effect into a 'Output' 'String' effect.
+traceToOutput :: Member (Output String) effs => Eff (Trace ': effs) ~> Eff effs
+traceToOutput = interpret $ \case Trace m -> output m
+
+{-# INLINE traceToOutput #-}
 
 ------------------------------------------------------------------------------
 -- | Transform an 'Output' 'String' effect into a 'Trace' effect.

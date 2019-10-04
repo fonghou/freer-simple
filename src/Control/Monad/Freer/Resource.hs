@@ -33,7 +33,6 @@ import Control.Monad.IO.Class ( liftIO )
 import Control.Monad.Trans.Resource
 
 import Data.Coerce
-import Data.OpenUnion
 import Data.OpenUnion.Internal
 import Data.Proxy
 
