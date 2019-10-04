@@ -15,7 +15,6 @@ module Control.Monad.Freer.Trace
     ( Trace(..)
     , trace
     , runTrace
-    , runTraceIO
     , runTraceList
     , ignoreTrace
     , traceToOutput
@@ -39,16 +38,10 @@ trace = send . Trace
 {-# INLINE trace #-}
 
 -- | An 'IO' handler for 'Trace' effects.
-runTraceIO :: forall m effs.
-           (LastMember m effs, MonadIO m)
-           => Eff (Trace ': effs) ~> Eff effs
-runTraceIO = subsume @m $ \(Trace s) -> liftIO $ Debug.traceIO s
-
-{-# INLINE runTraceIO #-}
-
--- | Run a 'Trace' effect by Debug.Trace.traceStack.
-runTrace :: Eff (Trace ': effs) ~> Eff effs
-runTrace = interpret $ \case Trace s -> pure $ Debug.traceStack s ()
+runTrace :: forall m effs.
+         (LastMember m effs, MonadIO m)
+         => Eff (Trace ': effs) ~> Eff effs
+runTrace = subsume @m $ \(Trace s) -> liftIO $ Debug.traceIO s
 
 {-# INLINE runTrace #-}
 

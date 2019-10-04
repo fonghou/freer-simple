@@ -28,7 +28,7 @@ test = X.handle (\(ErrorExc (e :: String)) -> print e >> return 0)
         trace "End"
         return (i + 10)
   where
-    lower = runTraceIO
+    lower = runTrace
       -- . runTraceList
       . errorToExc @String
       . outputToTrace @String
