@@ -55,7 +55,7 @@ assign, (.=) :: forall s a b eff.
              => ASetter s s a b
              -> b
              -> Eff eff ()
-assign l b = State.modify' @s (Lens.set l b)
+assign l b = State.modify @s (Lens.set l b)
 
 {-# INLINE assign #-}
 infixr 4 %=
@@ -67,6 +67,6 @@ modifying, (%=) :: forall s a b eff.
                 => ASetter s s a b
                 -> (a -> b)
                 -> Eff eff ()
-modifying l f = State.modify' @s (Lens.over l f)
+modifying l f = State.modify @s (Lens.over l f)
 
 {-# INLINE modifying #-}

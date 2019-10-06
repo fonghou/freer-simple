@@ -37,7 +37,7 @@ output = send . Output
 runOutputList :: forall o effs a. Eff (Output o ': effs) a -> Eff effs ([o], a)
 runOutputList = fmap (first reverse)
   . runState []
-  . reinterpret (\case Output o -> modify' (o:))
+  . reinterpret (\case Output o -> modify (o:))
 
 {-# INLINE runOutputList #-}
 
@@ -49,7 +49,7 @@ runOutputMonoid :: forall o m effs a.
                 -> Eff (Output o ': effs) a
                 -> Eff effs (m, a)
 runOutputMonoid f = runState mempty
-  . reinterpret (\case Output o -> modify' (<> f o))
+  . reinterpret (\case Output o -> modify (<> f o))
 
 {-# INLINE runOutputMonoid #-}
 
@@ -132,8 +132,8 @@ runOutputMonoidIORef
   -> (o -> m)
   -> Eff (Output o ': r) a
   -> Eff r a
-runOutputMonoidIORef ref f = interpret $ \case
-  Output o -> sendM $ liftIO $ atomicModifyIORef' ref (\s -> let !o' = f o
+runOutputMonoidIORef ref f = subsume @t $ \case
+  Output o -> liftIO $ atomicModifyIORef' ref (\s -> let !o' = f o
                                                              in (s <> o', ()))
 
 {-# INLINE runOutputMonoidIORef #-}
@@ -148,9 +148,7 @@ runOutputMonoidTVar
   -> (o -> m)
   -> Eff (Output o ': r) a
   -> Eff r a
-runOutputMonoidTVar tvar f = interpret $ \case
-  Output o -> sendM $ liftIO $ atomically $ do
-    s <- readTVar tvar
-    writeTVar tvar $! s <> f o
+runOutputMonoidTVar tvar f = subsume @t $ \case
+  Output o -> liftIO $ atomically $ modifyTVar' tvar (<> (f o))
 
 {-# INLINE runOutputMonoidTVar #-}

@@ -26,28 +26,32 @@ module Control.Monad.Freer.State
     , get
     , put
     , modify
-    , modify'
     , gets
       -- * State Handlers
     , runState
     , evalState
     , execState
+    , runAtomicStateIORef
+    , runAtomicStateTVar
       -- * State Utilities
     , transactState
     , transactState'
     ) where
 
-import Control.Monad.Freer ( Eff, Member, send, type (~>) )
+import Control.Concurrent.STM
+import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
+import Control.Monad.IO.Class
 import qualified Control.Monad.Trans.State.Strict as S
 
+import Data.IORef
 import Data.Proxy ( Proxy )
 import Data.Tuple ( swap )
 
 -- | Strict 'State' effects: one can either 'Get' values or 'Put' them.
 data State s r where
   Get :: State s s
-  Put :: !s -> State s ()
+  Modify :: (s -> s) -> State s ()
 
 -- | Retrieve the current value of the state of type @s :: *@.
 get :: forall s effs. Member (State s) effs => Eff effs s
@@ -57,28 +61,17 @@ get = send Get
 
 -- | Set the current state to a specified value of type @s :: *@.
 put :: forall s effs. Member (State s) effs => s -> Eff effs ()
-put s = send (Put s)
+put s = modify (const s)
 
 {-# INLINE put #-}
 
 -- | Modify the current state of type @s :: *@ using provided function
 -- @(s -> s)@.
 modify :: forall s effs. Member (State s) effs => (s -> s) -> Eff effs ()
-modify f = do
-  s <- get
-  put $ f s
+modify = send . Modify
 
 {-# INLINE modify #-}
 
-------------------------------------------------------------------------------
--- | A variant of 'modify' in which the computation is strict in the
--- new state.
-modify' :: forall s effs. Member (State s) effs => (s -> s) -> Eff effs ()
-modify' f = do
-  s <- get
-  put $! f s
-
-{-# INLINABLE modify' #-}
 -- | Retrieve a specific component of the current state using the provided
 -- projection function.
 gets :: forall s a effs. Member (State s) effs => (s -> a) -> Eff effs a
@@ -86,15 +79,15 @@ gets f = f <$> get
 
 {-# INLINE gets #-}
 
--- | Handler for 'State' effects.
+-- | A pure handler for 'State' effects.
 -- NB: State tuple (s, a) is swapped from MTL State (a, s)
 runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (s, a)
 runState = stateful stateNat
 
 {-# INLINE [3] runState #-}
 stateNat :: State s ~> S.StateT s (Eff r)
-stateNat = \case Get   -> S.get
-                 Put s -> S.put s
+stateNat = \case Get      -> S.get
+                 Modify f -> S.modify' f
 
 {-# INLINE stateNat #-}
 
@@ -134,8 +127,35 @@ transactState' :: forall s effs a.
 transactState' _ = transactState @s
 
 {-# INLINE transactState' #-}
+
+-- | An atomic IORef handler for 'State' effects.
+runAtomicStateIORef :: forall s m effs a.
+                    (LastMember m effs, MonadIO m)
+                    => IORef s
+                    -> Eff (State s ': effs) a
+                    -> Eff effs a
+runAtomicStateIORef ref = subsume @m $ \case
+  Get      -> liftIO $ readIORef ref
+  Modify f -> liftIO $ atomicModifyIORef' ref (\s -> (f s, ()))
+
+{-# INLINE runAtomicStateIORef #-}
+
+-- | An atomic TVar handler for 'State' effects.
+runAtomicStateTVar :: forall s m effs a.
+                   (LastMember m effs, MonadIO m)
+                   => TVar s
+                   -> Eff (State s ': effs) a
+                   -> Eff effs a
+runAtomicStateTVar tvar = subsume @m $ \case
+  Get      -> liftIO $ readTVarIO tvar
+  Modify f -> liftIO $ atomically $ modifyTVar' tvar f
+
+{-# INLINE runAtomicStateTVar #-}
+
+----------------------------------------------------------------------------
 {-# RULES "runState/reinterpret" forall s e (f :: forall x.
                                                e x
                                                -> Eff (State s ': r) x).
           runState s (reinterpret f e) =
           stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e #-}
+
