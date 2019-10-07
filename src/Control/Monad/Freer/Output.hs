@@ -134,7 +134,7 @@ runOutputMonoidIORef
   -> Eff r a
 runOutputMonoidIORef ref f = subsume @t $ \case
   Output o -> liftIO $ atomicModifyIORef' ref (\s -> let !o' = f o
-                                                             in (s <> o', ()))
+                                                     in (s <> o', ()))
 
 {-# INLINE runOutputMonoidIORef #-}
 
