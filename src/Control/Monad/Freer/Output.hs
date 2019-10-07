@@ -3,7 +3,6 @@
 module Control.Monad.Freer.Output
     ( Output(..)
     , output
-    , outputToWriter
     , ignoreOutput
     , runOutputList
     , runOutputMonoid
@@ -18,7 +17,6 @@ import Control.Concurrent.STM
 import Control.Monad ( when )
 import Control.Monad.Freer
 import Control.Monad.Freer.State
-import Control.Monad.Freer.Writer
 import Control.Monad.IO.Class
 
 import Data.Bifunctor ( first )
@@ -112,13 +110,6 @@ runOutputEff :: (o -> Eff effs ()) -> Eff (Output o ': effs) a -> Eff effs a
 runOutputEff act = interpret $ \case Output o -> act o
 
 {-# INLINE runOutputEff #-}
-
--- | Transform an 'Output' effect into a 'Writer' effect.
-outputToWriter
-  :: Member (Writer o) effs => Eff (Output o ': effs) a -> Eff effs a
-outputToWriter = interpret $ \case Output o -> tell o
-
-{-# INLINE outputToWriter #-}
 
 ------------------------------------------------------------------------------
 -- | Run an 'Output' effect by transforming it into atomic operations
