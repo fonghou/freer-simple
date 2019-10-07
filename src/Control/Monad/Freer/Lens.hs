@@ -9,9 +9,14 @@ module Control.Monad.Freer.Lens
     , use
     , uses
     , assign
-    , (.=)
     , modifying
+    , (.=)
     , (%=)
+    , (+=)
+    , (-=)
+    , (*=)
+    , (//=)
+    , (<>=)
     ) where
 
 import Control.Monad.Freer
@@ -70,3 +75,33 @@ modifying, (%=) :: forall s a b eff.
 modifying l f = State.modify @s (Lens.over l f)
 
 {-# INLINE modifying #-}
+(+=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
+l += x = l %= (+ x)
+
+{-# INLINE (+=) #-}
+infix 4 +=
+
+(-=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
+l -= x = l %= (subtract x)
+
+{-# INLINE (-=) #-}
+infix 4 -=
+
+(*=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
+l *= x = l %= (* x)
+
+{-# INLINE (*=) #-}
+infix 4 *=
+
+(//=)
+  :: (Member (State s) eff, Fractional a) => ASetter s s a a -> a -> Eff eff ()
+l //= x = l %= (/ x)
+
+{-# INLINE (//=) #-}
+infix 4 //=
+
+(<>=) :: (Member (State s) eff, Monoid a) => ASetter s s a a -> a -> Eff eff ()
+l <>= x = l %= (<> x)
+
+{-# INLINE (<>=) #-}
+infix 4 <>=

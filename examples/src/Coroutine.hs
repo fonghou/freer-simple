@@ -17,7 +17,8 @@ c1 :: Eff '[IO] ()
 c1 = runTrace $ runC th1 >>= loop
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
-{-
+{-|
+>>> runM c1
 1
 2
 Done
@@ -37,7 +38,8 @@ c2 :: Eff '[IO] ()
 c2 = runTrace $ runReader (10::Int) (loop =<< runC th2)
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)    = trace "Done"
-{-
+{-|
+>>> runM c2
 10
 10
 Done
@@ -48,7 +50,8 @@ c21 :: Eff '[IO] ()
 c21 = runTrace $ runReader (10::Int) (loop =<< runC th2)
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
-{-
+{-|
+>>> runM c21
 10
 11
 Done
@@ -63,7 +66,8 @@ c3 :: Eff '[IO] ()
 c3 = runTrace $ runReader (10::Int) (loop =<< runC th3)
  where loop (Continue x k) = trace (show (x::Int)) >> k () >>= loop
        loop (Done _)   = trace "Done"
-{-
+{-|
+>>> runM c3
 10
 10
 20
@@ -76,7 +80,8 @@ c31 :: Eff '[IO] ()
 c31 = runTrace $ runReader  (10::Int) (loop =<< runC th3)
  where loop (Continue x k) = trace (show (x::Int)) >> local (+(1::Int)) (k ()) >>= loop
        loop (Done _)   = trace "Done"
-{-
+{-|
+>>> runM c31
 10
 11
 21
@@ -99,7 +104,8 @@ c4 = runTrace $ runReader (10::Int) (loop =<< runC (th4 client))
        client = ay >> ay
        ay     = ask >>= yieldInt
 
-{-
+{-|
+>>> runM c4
 10
 11
 21
@@ -123,7 +129,8 @@ c5 = runTrace $ runReader (10::Int) (loop =<< runC (th client))
          v <- ask
          _ <- (if v > (20::Int) then id else local (+(5::Int))) cl
          if v > (20::Int) then return () else local (+(10::Int)) (th cl)
-{-
+{-|
+>>> runM c5
 10
 11
 12
@@ -159,7 +166,8 @@ c7 = runTrace . runReader (1000::Double) . runReader (10::Int)
          _ <- (if v > (20::Int) then id else local (+(5::Int))) cl
          if v > (20::Int) then return () else local (+(10::Int)) (th cl)
 
-{-
+{-|
+>>> runM c7
 1010
 1021
 1032
@@ -199,7 +207,9 @@ c7' = runTrace . runReader (1000::Double) . runReader (10::Int)
          v <- ask
          _ <- (if v > (20::Int) then id else local (+(5::Double))) cl
          if v > (20::Int) then return () else local (+(10::Int)) (th cl)
-{-
+
+{-|
+>>> runM c7'
 1010
 1021
 1032
