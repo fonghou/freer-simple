@@ -94,7 +94,9 @@ tests:
     - freer-simple
     - hspec
     - doctest
+    - async
     - safe-exceptions
+    - stm
     ghc-options:
     - -threaded
     - -rtsopts
@@ -114,3 +116,4 @@ benchmarks:
     - mtl
     - polysemy
     - polysemy-plugin
+    - stm
