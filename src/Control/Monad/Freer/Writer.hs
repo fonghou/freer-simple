@@ -69,21 +69,6 @@ listen = listens id
 
 {-# INLINE listen #-}
 
--- |
-pass :: forall w effs a.
-     (Monoid w, Member (Writer w) effs)
-     => Eff (Writer w ': effs) ( w
-                                   -> w
-                               , a
-                               )
-     -> Eff effs a
-pass m = do
-  (w, (f, a)) <- runWriter m
-  tell (f w)
-  return a
-
-{-# INLINE pass #-}
-
 -- | @'censor' f m@ is an action that executes the action @m@ and
 -- applies the function @f@ to its output, leaving the return value
 -- unchanged.
@@ -100,3 +85,17 @@ censor f m = do
   return a
 
 {-# INLINE censor #-}
+
+-- | @'pass' m@ is an action that executes the action @m@, which returns
+-- a value and a function, and returns the value, applying the function
+-- to the output.
+pass :: forall w effs a.
+     (Monoid w, Member (Writer w) effs)
+     => Eff (Writer w ': effs) (w -> w, a)
+     -> Eff effs a
+pass m = do
+  (w, (f, a)) <- runWriter m
+  tell (f w)
+  return a
+
+{-# INLINE pass #-}
