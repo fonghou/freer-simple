@@ -77,12 +77,10 @@ runBracket (Freer m) = runResourceT $ m $ \u -> case decomp u of
   Right (Bracket z (alloc :: Eff r' a) dealloc doit) -> do
     let z' :: Eff (r' :++: '[ResourceT IO]) ~> Eff '[ResourceT IO]
         z' = fmap (interpret $ send . liftIO @(ResourceT IO)) $ liftZoom z
-        raising :: Eff r' ~> Eff (r' :++: '[ResourceT IO])
-        raising = raiseLast @(ResourceT IO)
         liftResource :: ResourceT IO ~> Eff (r' :++: '[ResourceT IO])
         liftResource = liftEff . unsafeInj (getLength @_ @r' + 1)
-    runM $ (z') $ do
-      a <- raising alloc
+    runM $ z' $ do
+      a <- raiseLast @(ResourceT IO) alloc
       key <- liftResource $ register $ runM $ z $ dealloc a
       r <- raiseLast @(ResourceT IO) $ doit a
       liftResource $ release key
