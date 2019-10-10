@@ -30,22 +30,6 @@ interpret f (Freer m) = Freer $ \k -> m $ \u ->
 
 
 ------------------------------------------------------------------------------
--- | Like 'interpret', but with access to intermediate state.
-stateful
-  :: (eff ~> S.StateT s (Eff r))
-  -> s
-  -> Eff (eff ': r) a -> Eff r (s, a)
-stateful f s (Freer m) = Freer $ \k ->
-  fmap swap $ flip S.runStateT s $ m $ \u ->
-    case decomp u of
-      Left  x -> lift $ k x
-      Right y -> hoist (usingFreer k) $ f y
-{-# INLINE[3] stateful #-}
--- NB: @stateful f s = transform (flip S.runStateT s) f@, but is not
--- implemented as such, since 'transform' is available only >= 8.6.0
-
-
-------------------------------------------------------------------------------
 -- | Replace the topmost layer of the effect stack with another. This is often
 -- useful for interpreters which would like to introduce some intermediate
 -- effects before immediately handling them.
@@ -76,6 +60,37 @@ reinterpret4 f = interpret f . raiseUnder4
 {-# INLINE[3] reinterpret4 #-}
 
 
+------------------------------------------------------------------------------
+-- | Like 'interpret', but with access to intermediate state.
+stateful
+  :: (eff ~> S.StateT s (Eff r))
+  -> s
+  -> Eff (eff ': r) a -> Eff r (s, a)
+stateful f s (Freer m) = Freer $ \k ->
+  fmap swap $ flip S.runStateT s $ m $ \u ->
+    case decomp u of
+      Left  x -> lift $ k x
+      Right y -> hoist (usingFreer k) $ f y
+{-# INLINE[3] stateful #-}
+-- NB: @stateful f s = transform (flip S.runStateT s) f@, but is not
+-- implemented as such, since 'transform' is available only >= 8.6.0
+
+
+------------------------------------------------------------------------------
+-- | Run an effect, potentially short circuiting in its evaluation.
+shortCircuit
+  :: (eff ~> E.ExceptT e (Eff r))
+  -> Eff (eff ': r) a
+  -> Eff r (Either e a)
+shortCircuit f (Freer m) = Freer $ \k -> E.runExceptT $ m $ \u ->
+  case decomp u of
+    Left  x -> lift $ k x
+    Right y -> hoist (usingFreer k) $ f y
+{-# INLINE shortCircuit #-}
+-- NB: @shortCircuit = transform E.runExceptT@, but is not implemented as such,
+-- since 'transform' is available only >= 8.6.0
+
+
 #if __GLASGOW_HASKELL__ >= 806
 ------------------------------------------------------------------------------
 -- | Run an effect via the side-effects of a monad transformer.
@@ -99,21 +114,6 @@ transform hoist' lower f (Freer m) =
       Right y -> hoist' (usingFreer k) $ f y
 {-# INLINE[3] transform #-}
 #endif
-
-
-------------------------------------------------------------------------------
--- | Run an effect, potentially short circuiting in its evaluation.
-shortCircuit
-  :: (eff ~> E.ExceptT e (Eff r))
-  -> Eff (eff ': r) a
-  -> Eff r (Either e a)
-shortCircuit f (Freer m) = Freer $ \k -> E.runExceptT $ m $ \u ->
-  case decomp u of
-    Left  x -> lift $ k x
-    Right y -> hoist (usingFreer k) $ f y
-{-# INLINE shortCircuit #-}
--- NB: @shortCircuit = transform E.runExceptT@, but is not implemented as such,
--- since 'transform' is available only >= 8.6.0
 
 
 ------------------------------------------------------------------------------
