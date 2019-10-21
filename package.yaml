@@ -66,7 +66,6 @@ library:
   - resourcet
   - random
   - stm
-  - unliftio-core
 
 executables:
   freer-examples:
@@ -75,7 +74,7 @@ executables:
     dependencies:
     - freer-simple
     - mtl
-    - safe-exceptions
+    - unliftio
 
 tests:
   unit:
@@ -95,8 +94,8 @@ tests:
     - hspec
     - doctest
     - async
-    - safe-exceptions
     - stm
+    - unliftio
     ghc-options:
     - -threaded
     - -rtsopts

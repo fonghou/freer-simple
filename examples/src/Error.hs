@@ -2,7 +2,7 @@
 
 module Error where
 
-import Control.Exception.Safe
+import UnliftIO.Exception as X
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Input
@@ -66,3 +66,13 @@ run3 =
 run3' :: String
 run3' =
   test3 & evalState "State before Error" & runError & fmap (either id id) & run
+
+decr :: Members '[State Int, Error ()] r => Eff r ()
+decr = do
+  x <- get @Int
+  if x > 0
+    then put (pred x)
+    else throwError ()
+
+decr3 :: Members '[State Int, Error ()] r => Eff r ()
+decr3 = decr >> catchError (decr >> decr) return

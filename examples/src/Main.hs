@@ -2,7 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main (main) where
 
-import qualified Control.Exception.Safe as X
+import qualified UnliftIO.Exception as X
 import Control.Monad (forever, when)
 import Data.Maybe (fromMaybe)
 import Data.List (intercalate)

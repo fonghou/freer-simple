@@ -17,14 +17,16 @@
 module Control.Monad.Freer.Writer
     ( Writer(..)
     , tell
+    , censor
+    , listen
     , runWriter
     , writerToOutput
     ) where
 
 import Control.Monad.Freer
-import Control.Monad.Freer.Interpretation ( stateful )
-import Control.Monad.Trans.State.Strict ( modify' )
+import Control.Monad.Freer.Interpretation
 import Control.Monad.Freer.Output
+import Control.Monad.Trans.State.Strict ( modify' )
 
 import Data.Monoid ( (<>) )
 
@@ -35,7 +37,6 @@ data Writer w r where
 -- | Send a change to the attached environment.
 tell :: forall w effs. Member (Writer w) effs => w -> Eff effs ()
 tell w = send (Tell w)
-
 {-# INLINE tell #-}
 
 -- | Simple handler for 'Writer' effects.
@@ -49,4 +50,18 @@ runWriter = stateful (\(Tell w) -> modify' (<> w)) mempty
 -- | Transform a 'Trace' effect into a 'Output' 'String' effect.
 writerToOutput :: Member (Output o) effs => Eff (Writer o ': effs) ~> Eff effs
 writerToOutput = interpret $ \case Tell m -> output m
+{-# INLINE writerToOutput #-}
 
+censor :: forall w effs a.
+       Member (Writer w) effs
+       => (w -> w)
+       -> Eff (Writer w ': effs) a
+       -> Eff effs a
+censor f m = relay pure (\(Tell w) k -> tell (f w) >>= k) m
+
+listen :: forall w effs a.
+       Member (Writer w) effs
+       => Eff (Writer w ': effs) a
+       -> (w -> Eff effs a)
+       -> Eff effs a
+listen m h = relay pure (\(Tell w) k -> h w >> tell w >>= k) m
