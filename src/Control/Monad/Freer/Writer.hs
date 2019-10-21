@@ -17,8 +17,6 @@
 module Control.Monad.Freer.Writer
     ( Writer(..)
     , tell
-    , censor
-    , listen
     , runWriter
     , writerToOutput
     ) where
@@ -51,17 +49,3 @@ runWriter = stateful (\(Tell w) -> modify' (<> w)) mempty
 writerToOutput :: Member (Output o) effs => Eff (Writer o ': effs) ~> Eff effs
 writerToOutput = interpret $ \case Tell m -> output m
 {-# INLINE writerToOutput #-}
-
-censor :: forall w effs a.
-       Member (Writer w) effs
-       => (w -> w)
-       -> Eff (Writer w ': effs) a
-       -> Eff effs a
-censor f m = relay pure (\(Tell w) k -> tell (f w) >>= k) m
-
-listen :: forall w effs a.
-       Member (Writer w) effs
-       => Eff (Writer w ': effs) a
-       -> (w -> Eff effs a)
-       -> Eff effs a
-listen m h = relay pure (\(Tell w) k -> h w >> tell w >>= k) m
