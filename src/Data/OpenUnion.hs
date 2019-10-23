@@ -25,12 +25,16 @@ module Data.OpenUnion
       -- * Open Union Membership Constraints
     , Member(..)
     , Members
+    , Members'
     , LastMember
+    , Length
     ) where
 
 import Data.Kind ( Constraint )
 import Data.OpenUnion.Internal ( (:++:), Member(inj, prj), Union
                                , Weakens(weakens), decomp, extract, weaken )
+
+import GHC.TypeLits
 
 -- | A shorthand constraint that represents a combination of multiple 'Member'
 -- constraints. That is, the following 'Members' constraint:
@@ -50,6 +54,14 @@ import Data.OpenUnion.Internal ( (:++:), Member(inj, prj), Union
 type family Members effs effs' :: Constraint where
   Members (eff ': effs) effs' = (Member eff effs', Members effs effs')
   Members '[] effs' = ()
+
+-- | Compute the length of type list.
+type family Length (r :: [k]) where
+  Length '[] = 0
+  Length (a ': r) = 1 + Length r
+
+-- | A shorthand constraint that contains length of effect list.
+type Members' effs effs' = (Members effs effs', KnownNat (Length effs'))
 
 -- | Like 'Member', @'LastMember' eff effs@ is a constraint that requires that
 -- @eff@ is in the type-level list @effs@. However, /unlike/ 'Member',

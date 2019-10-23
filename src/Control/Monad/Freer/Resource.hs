@@ -53,24 +53,20 @@ liftBracket f (Freer m) = Freer $ \k -> m $ \u -> case decomp u of
   Left x -> usingFreer k $ raise $ f $ liftEff x
   Right (Bracket z alloc dealloc doit) ->
     usingFreer k $ send $ Bracket (f . z) alloc dealloc doit
-
 {-# INLINE liftBracket #-}
+
 raiseLast :: forall m r. Eff r ~> Eff (r :++: '[m])
 raiseLast = coerce
-
 {-# INLINE raiseLast #-}
+
 liftZoom :: (Eff r ~> Eff '[IO]) -> Eff (r :++: '[m]) ~> Eff '[IO, m]
 liftZoom f z = raiseUnder $ f $ coerce z
-
 {-# INLINE liftZoom #-}
-type family Length (r :: [k]) where
-  Length '[] = 0
-  Length (a ': r) = 1 + Length r
 
 getLength :: forall k (r :: [k]). KnownNat (Length r) => Word
 getLength = fromInteger $ natVal $ Proxy @(Length r)
-
 {-# INLINE getLength #-}
+
 runBracket :: Bracketed '[IO] ~> IO
 runBracket (Freer m) = runResourceT $ m $ \u -> case decomp u of
   Left x -> liftIO $ extract x
@@ -95,27 +91,24 @@ runResource :: forall r.
             -- This is usually some composition of runA . runB. 'errorToExc'
             -> Bracketed r ~> IO
 runResource f m = runBracket $ liftBracket f m
-
 {-# INLINE runResource #-}
+
 bracket :: KnownNat (Length r)
         => Eff r a
         -> (a -> Eff r ())
         -> (a -> Eff r b)
         -> Bracketed r b
 bracket alloc dealloc doit = send $ Bracket id alloc dealloc doit
-
 {-# INLINE bracket #-}
 
 -- | Like 'bracket', but after and action don't pass parameter.
 bracket_
   :: KnownNat (Length r) => Eff r a -> Eff r () -> Eff r b -> Bracketed r b
 bracket_ before after action = bracket before (const after) (const action)
-
 {-# INLINE bracket_ #-}
 
 -- | Like 'bracket', but for the simple case of one computation to run
 -- afterward.
 finally :: KnownNat (Length r) => Eff r a -> Eff r () -> Bracketed r a
 finally action finalizer = bracket (pure ()) (pure finalizer) (const action)
-
 {-# INLINE finally #-}

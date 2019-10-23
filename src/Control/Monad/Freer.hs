@@ -186,6 +186,7 @@ module Control.Monad.Freer
       -- computation from a particular concrete list of effects.
     , Member
     , Members
+    , Members'
     , LastMember
       -- ** Sending Arbitrary Effects
     , send
@@ -230,8 +231,8 @@ module Control.Monad.Freer
     ) where
 
 import Control.Monad.Freer.Internal
-       ( Eff, LastMember, Member, Members, raise, raiseUnder, raiseUnder2
-       , raiseUnder3, raiseUnder4, run, runM, send, sendM )
+       ( Eff, LastMember, Member, Members, Members', raise, raiseUnder
+       , raiseUnder2, raiseUnder3, raiseUnder4, run, runM, send, sendM )
 import Control.Monad.Freer.Interpretation
        ( interpose, interposeState, interpret, reinterpret, reinterpret2
        , reinterpret3, reinterpret4, subsume, transform )
