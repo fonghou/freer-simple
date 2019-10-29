@@ -16,7 +16,7 @@ spec = do
   describe "bracket_" $ do
     it "runs a cleanup action on success (IORef)" $ do
       outputs <- newIORef []
-      (result :: Either (ErrorExc ErrorCall) ()) <- try @(ErrorExc ErrorCall)
+      (result :: Either (ErrorExc ErrorCall) ()) <- try
         . runResource
           (errorToExc @ErrorCall
            . runOutputMonoidIORef @[String] outputs id
@@ -30,7 +30,7 @@ spec = do
       result `shouldBe` Left (ErrorExc $ ErrorCall "error")
     it "runs a cleanup action on success (TVar)" $ do
       outputs <- newTVarIO []
-      (result :: Either (ErrorExc ErrorCall) ()) <- try @(ErrorExc ErrorCall)
+      (result :: Either (ErrorExc ErrorCall) ()) <- try
         . runResource
           (errorToExc @ErrorCall . runOutputMonoidTVar @[String] outputs id)
         $ bracket_

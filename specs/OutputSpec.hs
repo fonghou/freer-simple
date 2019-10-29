@@ -8,7 +8,6 @@ import Control.Monad.Freer.Output
 
 import Data.Foldable
 import Data.Functor.Identity
-import Data.IORef
 
 import Test.Hspec
 
@@ -40,17 +39,6 @@ spec = parallel $ do
       in do
            runM t `shouldThrow` errorCall "strict"
            evaluate (run t) `shouldThrow` errorCall "strict"
-  describe "runOutputMonoidIORef" $ do
-    it "should commit writes of asynced computations"
-      $ let io = do
-              ref <- newIORef ""
-              race_
-                (runM . runOutputMonoidIORef ref (show @Int) $ test1)
-                (runM . runOutputMonoidIORef ref (show @Int) $ test1)
-              readIORef ref
-        in do
-             res <- io
-             res `shouldBe` "1212"
   describe "runOutputMonoidTVar" $ do
     it "should commit writes of asynced computations"
       $ let io = do
