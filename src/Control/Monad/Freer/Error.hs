@@ -98,7 +98,7 @@ mapError f m = handleError @e1 m $ \e -> throwError (f e)
 
 {-# INLINE mapError #-}
 newtype ErrorExc e = ErrorExc e
-  deriving ( Typeable )
+  deriving ( Typeable, Eq )
 
 instance Typeable e => Show (ErrorExc e) where
   show = mappend "WrappedError: " . show . typeRep

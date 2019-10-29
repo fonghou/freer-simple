@@ -52,8 +52,12 @@ module Control.Monad.Freer.Internal
     , runM
       -- * MonadFail
     , Fail(..)
+      -- * NonDet
+    , NonDet (..)
     ) where
 
+import Control.Applicative (Alternative(..))
+import Control.Monad (MonadPlus(..))
 import Control.Monad.Base ( MonadBase, liftBase )
 import Control.Monad.Fail
 import Control.Monad.IO.Class ( MonadIO, liftIO )
@@ -121,12 +125,6 @@ instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
 
   {-# INLINE liftBase #-}
 
-{-|
-instance (LastMember IO r) => MonadIO (Eff r) where
-  liftIO = sendM
-  {-# INLINE liftIO #-}
-
--}
 instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
   liftIO = sendM . liftIO
 
@@ -144,6 +142,18 @@ instance (Member Fail r) => MonadFail (Eff r) where
   fail = send . Fail
 
   {-# INLINE fail #-}
+
+data NonDet a where
+  MZero :: NonDet a
+  MPlus :: NonDet Bool
+
+instance Member NonDet effs => Alternative (Eff effs) where
+  empty = mzero
+  (<|>) = mplus
+
+instance Member NonDet effs => MonadPlus (Eff effs) where
+  mzero       = send MZero
+  mplus m1 m2 = send MPlus >>= \x -> if x then m1 else m2
 
 ------------------------------------------------------------------------------
 -- | Run a natural transformation over `Freer`.
