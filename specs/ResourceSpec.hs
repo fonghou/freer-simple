@@ -14,7 +14,7 @@ import Test.Hspec
 spec :: Spec
 spec = do
   describe "bracket_" $ do
-    it "runs a cleanup action on success (IORef)" $ do
+    it "runs a cleanup action on error (IORef)" $ do
       outputs <- newIORef []
       (result :: Either (ErrorExc ErrorCall) ()) <- try
         . runResource
@@ -28,14 +28,13 @@ spec = do
           throwError $ ErrorCall msg
       readIORef outputs `shouldReturn` ["setup", "use", "teardown"]
       result `shouldBe` Left (ErrorExc $ ErrorCall "error")
+
     it "runs a cleanup action on success (TVar)" $ do
       outputs <- newTVarIO []
       (result :: Either (ErrorExc ErrorCall) ()) <- try
         . runResource
           (errorToExc @ErrorCall . runOutputMonoidTVar @[String] outputs id)
-        $ bracket_
-          (output ["setup"])
-          (output ["teardown"])
-          (throwError $ ErrorCall "error")
-      readTVarIO outputs `shouldReturn` ["setup", "teardown"]
-      result `shouldBe` Left (ErrorExc $ ErrorCall "error")
+        $ bracket_ (output ["setup"]) (output ["teardown"])
+        $ throwError (ErrorCall "error") `catchError` (\(ErrorCall msg) -> output [msg])
+      readTVarIO outputs `shouldReturn` ["setup", "error",  "teardown"]
+      result `shouldBe` Right ()
