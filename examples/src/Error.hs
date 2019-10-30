@@ -37,7 +37,7 @@ run1' = catch run1 $ \(ErrorExc (s :: String)) -> do
 test2 :: (Members [Input String, Output String, Trace] m) => Eff m ()
 test2 = handleError @String test1 $ \e -> output e
 
-run2 :: IO _
+run2 :: IO ([String], Either String ())
 run2 = test2
   & runInputConst @String "howdy"
   & runError @String

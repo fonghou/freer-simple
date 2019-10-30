@@ -52,12 +52,8 @@ module Control.Monad.Freer.Internal
     , runM
       -- * MonadFail
     , Fail(..)
-      -- * NonDet
-    , NonDet (..)
     ) where
 
-import Control.Applicative (Alternative(..))
-import Control.Monad (MonadPlus(..))
 import Control.Monad.Base ( MonadBase, liftBase )
 import Control.Monad.Fail
 import Control.Monad.IO.Class ( MonadIO, liftIO )
@@ -99,74 +95,54 @@ newtype Freer f a = Freer { runFreer :: forall m. Monad m => (f ~> m) -> m a }
 
 instance Functor (Freer f) where
   fmap f (Freer m) = Freer $ \k -> fmap f $ m k
-
   {-# INLINE fmap #-}
 
 instance Applicative (Freer f) where
   pure a = Freer $ const $ pure a
-
   {-# INLINE pure #-}
   Freer f <*> Freer a = Freer $ \k -> f k <*> a k
-
   {-# INLINE (<*>) #-}
 
 instance Monad (Freer f) where
   return = pure
-
   {-# INLINE return #-}
   Freer ma >>= f = Freer $ \k -> do
     z <- ma k
     runFreer (f z) k
-
   {-# INLINE (>>=) #-}
 
 instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
   liftBase = sendM . liftBase
-
   {-# INLINE liftBase #-}
 
 instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
   liftIO = sendM . liftIO
-
   {-# INLINE liftIO #-}
 
 instance MonadTrans Freer where
   lift = liftEff
+  {-# INLINE lift #-}
 
 instance MFunctor Freer where
   hoist = hoistEff
+  {-# INLINE hoist #-}
 
 newtype Fail a = Fail String
 
 instance (Member Fail r) => MonadFail (Eff r) where
   fail = send . Fail
-
   {-# INLINE fail #-}
-
-data NonDet a where
-  MZero :: NonDet a
-  MPlus :: NonDet Bool
-
-instance Member NonDet effs => Alternative (Eff effs) where
-  empty = mzero
-  (<|>) = mplus
-
-instance Member NonDet effs => MonadPlus (Eff effs) where
-  mzero       = send MZero
-  mplus m1 m2 = send MPlus >>= \x -> if x then m1 else m2
 
 ------------------------------------------------------------------------------
 -- | Run a natural transformation over `Freer`.
 hoistEff :: (f ~> g) -> Freer f ~> Freer g
 hoistEff nat (Freer m) = Freer $ \k -> m $ k . nat
-
 {-# INLINE hoistEff #-}
 
 -- | Lift a value into 'Freer'. When 'f' is 'Union', this specializes as
 -- @Union -- r x -> Eff r x@
 liftEff :: f x -> Freer f x
 liftEff u = Freer $ \k -> k u
-
 {-# INLINE liftEff #-}
 
 -- | “Sends” an effect, which should be a value defined as part of an effect
@@ -175,7 +151,6 @@ liftEff u = Freer $ \k -> k u
 -- the 'Eff' monad so that it can be used and handled.
 send :: Member eff effs => eff a -> Eff effs a
 send = liftEff . inj
-
 {-# INLINE send #-}
 
 -- | Identical to 'send', but specialized to the final effect in @effs@ to
@@ -183,7 +158,6 @@ send = liftEff . inj
 -- transformer stack used in conjunction with 'runM'.
 sendM :: (Monad m, LastMember m effs) => m a -> Eff effs a
 sendM = send
-
 {-# INLINE sendM #-}
 
 --------------------------------------------------------------------------------
@@ -205,7 +179,6 @@ sendM = send
 -- @
 run :: Eff '[Identity] a -> a
 run = runIdentity . runM
-
 {-# INLINE run #-}
 
 -- | Like 'run', 'runM' runs an 'Eff' computation and extracts the result.
@@ -215,18 +188,17 @@ run = runIdentity . runM
 -- in traditional transformer stacks.
 runM :: Monad m => Eff '[m] a -> m a
 runM = usingFreer extract
-
 {-# INLINE runM #-}
 
 -- | @'flip' 'runFreer'@
 usingFreer :: Monad m => (forall t. f t -> m t) -> Freer f a -> m a
 usingFreer k m = runFreer m k
+{-# INLINE usingFreer #-}
 
 -- | Embeds a less-constrained 'Eff' into a more-constrained one. Analogous to
 -- MTL's 'lift'.
 raise :: Eff effs a -> Eff (e ': effs) a
 raise = hoistEff weaken
-
 {-# INLINE raise #-}
 
 ------------------------------------------------------------------------------
@@ -237,17 +209,16 @@ raise = hoistEff weaken
 -- Also see 'reinterpret'.
 raiseUnder :: Eff (eff ': r) a -> Eff (eff ': u ': r) a
 raiseUnder = hoistEff intro1
-
 {-# INLINE raiseUnder #-}
+
 raiseUnder2 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': r) a
 raiseUnder2 = hoistEff intro2
-
 {-# INLINE raiseUnder2 #-}
+
 raiseUnder3 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': r) a
 raiseUnder3 = hoistEff intro3
-
 {-# INLINE raiseUnder3 #-}
+
 raiseUnder4 :: Eff (eff ': r) a -> Eff (eff ': u ': v ': x ': y ': r) a
 raiseUnder4 = hoistEff intro4
-
 {-# INLINE raiseUnder4 #-}
