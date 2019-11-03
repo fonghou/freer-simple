@@ -2,7 +2,6 @@
 
 module Error where
 
-import UnliftIO.Exception as X
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Input
@@ -11,6 +10,8 @@ import Control.Monad.Freer.State
 import Control.Monad.Freer.Trace
 
 import Data.Function
+
+import UnliftIO.Exception as X
 
 test1
   :: (Members [Input String, Output String, Error String, Trace] m) => Eff m ()
