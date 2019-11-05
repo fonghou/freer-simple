@@ -2,11 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
@@ -15,7 +11,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE ViewPatterns #-}
 
 {-# OPTIONS_GHC -Wall #-}
 
@@ -72,7 +67,7 @@ runBracket (Freer m) = runResourceT $ m $ \u -> case decomp u of
   Left x -> liftIO $ extract x
   Right (Bracket z (alloc :: Eff r' a) dealloc doit) -> do
     let z' :: Eff (r' :++: '[ResourceT IO]) ~> Eff '[ResourceT IO]
-        z' = fmap (interpret $ send . liftIO @(ResourceT IO)) $ liftZoom z
+        z' = interpret (send . liftIO @(ResourceT IO)) <$> liftZoom z
         liftResource :: ResourceT IO ~> Eff (r' :++: '[ResourceT IO])
         liftResource = liftEff . unsafeInj (getLength @_ @r' + 1)
     runM $ z' $ do
