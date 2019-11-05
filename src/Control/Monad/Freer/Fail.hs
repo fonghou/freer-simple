@@ -1,6 +1,9 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-
-module Control.Monad.Freer.Fail ( Fail(..), runFail, failToError, failToMonad ) where
+module Control.Monad.Freer.Fail
+  ( Fail(..)
+  , runFail
+  , failToError
+  , failToMonad
+  ) where
 
 import Control.Monad.Fail as Fail
 import Control.Monad.Freer
