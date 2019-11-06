@@ -66,6 +66,7 @@ library:
   - resourcet
   - random
   - stm
+  - hspec
 
 executables:
   freer-examples:

@@ -94,7 +94,7 @@ type Eff r = Freer (Union r)
 newtype Freer f a = Freer { runFreer :: forall m. Monad m => (f ~> m) -> m a }
 
 instance Functor (Freer f) where
-  fmap f (Freer m) = Freer $ \k -> fmap f $ m k
+  fmap f (Freer m) = Freer $ \k -> f <$> m k
   {-# INLINE fmap #-}
 
 instance Applicative (Freer f) where
