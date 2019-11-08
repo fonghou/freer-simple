@@ -89,7 +89,7 @@ import Data.OpenUnion.Internal
 -- order.
 type Eff r = Freer (Union r)
 
-newtype Freer f a = Freer { runFreer :: forall m. Monad m => (f ~> m) -> m a }
+newtype Freer f a = Freer { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
 
 instance Functor (Freer f) where
   fmap f (Freer m) = Freer $ \k -> f <$> m k
@@ -189,7 +189,7 @@ runM = usingFreer extract
 {-# INLINE runM #-}
 
 -- | @'flip' 'runFreer'@
-usingFreer :: Monad m => (forall t. f t -> m t) -> Freer f a -> m a
+usingFreer :: Monad m => (forall x. f x -> m x) -> Freer f a -> m a
 usingFreer k m = runFreer m k
 {-# INLINE usingFreer #-}
 
