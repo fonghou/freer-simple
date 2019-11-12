@@ -16,11 +16,11 @@ module Control.Monad.Freer.Error
     , ErrorExc(..)
     , throwError
     , catchError
+    , handleError
     , liftEither
     , liftEitherM
     , mapError
     , runError
-    , handleError
     , errorToExc
     ) where
 
@@ -97,6 +97,7 @@ mapError :: forall e1 e2 r a.
 mapError f m = handleError @e1 m $ \e -> throwError (f e)
 
 {-# INLINE mapError #-}
+
 newtype ErrorExc e = ErrorExc e
   deriving ( Typeable, Eq )
 

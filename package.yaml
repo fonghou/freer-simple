@@ -65,6 +65,7 @@ library:
   - mtl
   - resourcet
   - random
+  - async
   - stm
   - hspec
 
