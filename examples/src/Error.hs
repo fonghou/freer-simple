@@ -19,7 +19,7 @@ test1 = do
   trace "debug"
   i <- input @String
   output "hello"
-  output $ i
+  output i
   throwError "DIE"
   trace "end"
 

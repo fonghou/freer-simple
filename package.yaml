@@ -67,6 +67,7 @@ library:
   - random
   - async
   - stm
+  - streaming
   - hspec
 
 executables:
