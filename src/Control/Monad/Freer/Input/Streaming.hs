@@ -1,4 +1,4 @@
-module Control.Monad.Freer.Stream.Input
+module Control.Monad.Freer.Input.Streaming
     ( module Control.Monad.Freer.Input
     , runInputStream
     , yieldInput
