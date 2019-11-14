@@ -18,3 +18,8 @@ runOutputStream :: forall o r a.
 runOutputStream = runState (pure ())
   . reinterpret
     (\case Output o -> modify @(S.Stream (Of o) (Eff r) ()) (S.cons o))
+
+runOutputStream' :: forall o r a.
+                Eff (Output o ': r) a
+                -> S.Stream (Of o) (Eff r) a
+runOutputStream' = undefined

@@ -18,6 +18,7 @@ module Control.Monad.Freer.Writer
     ( Writer(..)
     , tell
     , runWriter
+    , execWriter
     , writerToOutput
     ) where
 
@@ -44,7 +45,12 @@ runWriter
 runWriter = stateful (\(Tell w) -> modify' (<> w)) mempty
 {-# INLINE runWriter #-}
 
-------------------------------------------------------------------------------
+-- | Extract the output from a writer computation.
+execWriter
+  :: forall w effs a. Monoid w => Eff (Writer w ': effs) a -> Eff effs w
+execWriter = fmap fst . runWriter
+{-# INLINE execWriter #-}
+
 -- | Transform a 'Trace' effect into a 'Output' 'String' effect.
 writerToOutput :: Member (Output o) effs => Eff (Writer o ': effs) ~> Eff effs
 writerToOutput = interpret $ \case Tell m -> output m

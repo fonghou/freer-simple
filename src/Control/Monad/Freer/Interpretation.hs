@@ -105,11 +105,10 @@ transform
   -> (eff ~> t (Eff r))
   -> Eff (eff ': r) a
   -> Eff r b
-transform hoist' lower f (Freer m) =
-  Freer $ \k -> lower $ m $ \u ->
-    case decomp u of
-      Left  x -> lift $ k x
-      Right y -> hoist' (usingFreer k) $ f y
+transform hoist' lower f (Freer m) = Freer $ \k -> lower $ m $ \u ->
+  case decomp u of
+    Left  x -> lift $ k x
+    Right y -> hoist' (usingFreer k) $ f y
 {-# INLINE[3] transform #-}
 #endif
 

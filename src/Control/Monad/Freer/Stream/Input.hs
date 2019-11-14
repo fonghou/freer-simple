@@ -1,8 +1,8 @@
 module Control.Monad.Freer.Stream.Input
-  ( module Control.Monad.Freer.Input
-  , runInputStream
-  , yieldInput
-  ) where
+    ( module Control.Monad.Freer.Input
+    , runInputStream
+    , yieldInput
+    ) where
 
 import Control.Monad.Freer
 import Control.Monad.Freer.Input
@@ -17,14 +17,18 @@ runInputStream :: forall i r a.
                S.Stream (Of i) (Eff r) ()
                -> Eff (Input (Maybe i) ': r) a
                -> Eff r a
-runInputStream stream = evalState stream
-  . reinterpret (\Input -> do
-    s <- get @(S.Stream (Of i) (Eff r) ())
-    raise (S.uncons s) >>= \case
-      Nothing -> pure Nothing
-      Just (i, s') -> do
-        put s'
-        pure $ Just i)
+runInputStream stream = evalState (Just stream)
+  . reinterpret
+    (\Input -> do
+       get @(Maybe (S.Stream (Of i) (Eff r) ())) >>= \case
+         Nothing -> pure Nothing
+         Just s  -> raise (S.uncons s) >>= \case
+           Nothing      -> do
+             put @(Maybe (S.Stream (Of i) (Eff r) ())) Nothing
+             pure Nothing
+           Just (i, s') -> do
+             put $ Just s'
+             pure $ Just i)
 
 yieldInput :: Member (Input i) r => S.Stream (Of i) (Eff r) ()
 yieldInput = S.lift input >>= S.yield
