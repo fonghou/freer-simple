@@ -27,7 +27,7 @@ run1 :: IO ()
 run1 = test1
   & runInputConst @String "world"
   & errorToExc @String
-  & outputToTrace @String
+  & outputToTrace id
   & runTrace
   & runM
 

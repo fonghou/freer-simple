@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE QuantifiedConstraints #-}
 -- |
 -- Module:       Control.Monad.Freer.Trace
 -- Description:  Composable Trace effects.
@@ -17,11 +19,13 @@ module Control.Monad.Freer.Trace
     , runTrace
     , runTraceList
     , ignoreTrace
-    , traceToOutput
     , outputToTrace
+    , traceToOutput
+    , traceEffect
     ) where
 
 import Control.Monad.Freer
+import Control.Monad.Freer.Internal
 import Control.Monad.Freer.Output
 import Control.Monad.IO.Class
 
@@ -68,8 +72,17 @@ traceToOutput = interpret $ \case Trace m -> output m
 
 ------------------------------------------------------------------------------
 -- | Transform an 'Output' 'String' effect into a 'Trace' effect.
-outputToTrace :: (Show o, Member Trace effs)
-              => Eff (Output o ': effs) ~> Eff effs
-outputToTrace = interpret $ \case Output o -> trace $ show o
+outputToTrace :: Member Trace effs
+              => (o -> String) -> Eff (Output o ': effs) ~> Eff effs
+outputToTrace show' = interpret $ \case Output o -> trace $ show' o
 
 {-# INLINE outputToTrace #-}
+
+traceEffect :: forall e r. (Members '[e, Trace] r, forall x. Show (e x))
+            => Eff r ~> Eff r
+traceEffect (Freer m) = Freer $ \k -> m $ \u ->
+  case prj @e u of
+    Just e -> do
+      runFreer (trace $ show e) k
+      k u
+    Nothing -> k u
