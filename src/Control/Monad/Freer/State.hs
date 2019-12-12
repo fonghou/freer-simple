@@ -28,9 +28,11 @@ module Control.Monad.Freer.State
     , modify
     , gets
       -- * State Handlers
-    , runState
     , evalState
     , execState
+    , stateToST
+    , runState
+    , runStateSTRef
     , runAtomicStateIORef
     , runAtomicStateTVar
       -- * State Utilities
@@ -42,10 +44,12 @@ import Control.Concurrent.STM
 import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
 import Control.Monad.IO.Class
+import Control.Monad.ST
 import qualified Control.Monad.Trans.State.Strict as S
 
 import Data.IORef
 import Data.Proxy ( Proxy )
+import Data.STRef
 import Data.Tuple ( swap )
 
 -- | Strict 'State' effects: one can either 'Get' values or 'Put' them.
@@ -128,6 +132,32 @@ transactState' _ = transactState @s
 
 {-# INLINE transactState' #-}
 
+-- | Run 'State' effects by transforming it into 'ST'.
+stateToST :: forall s st effs a.
+              LastMember (ST st) effs
+              => s
+              -> Eff (State s ': effs) a
+              -> Eff effs (s, a)
+stateToST s eff = do
+  ref <- sendM $ newSTRef s
+  res <- runStateSTRef ref eff
+  state <- sendM $ readSTRef ref
+  return (state, res)
+
+{-# INLINE stateToST #-}
+
+-- | Run 'State' effects in terms of operations in 'ST'.
+runStateSTRef :: forall s st effs a.
+              LastMember (ST st) effs
+              => STRef st s
+              -> Eff (State s ': effs) a
+              -> Eff effs a
+runStateSTRef ref = subsume @(ST st) $ \case
+  Get      -> readSTRef ref
+  Modify f -> modifySTRef' ref f
+
+{-# INLINE runStateSTRef #-}
+
 -- | An atomic IORef handler for 'State' effects.
 runAtomicStateIORef :: forall s m effs a.
                     (LastMember m effs, MonadIO m)
@@ -154,7 +184,7 @@ runAtomicStateTVar tvar = subsume @m $ \case
 
 ----------------------------------------------------------------------------
 {-# RULES "runState/reinterpret"
-  forall s e (f :: forall x. e x -> Eff (State s ': r) x).
-    runState s (reinterpret f e) =
-    stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
+    forall s e (f :: forall x. e x -> Eff (State s ': r) x).
+      runState s (reinterpret f e) =
+        stateful (\x -> S.StateT (\s' -> fmap swap $ runState s' $ f x)) s e
   #-}
