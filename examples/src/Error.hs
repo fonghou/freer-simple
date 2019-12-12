@@ -13,20 +13,22 @@ import Data.Function
 
 import UnliftIO.Exception as X
 
+newtype FooErr = FooErr String deriving (Show)
+
 test1
-  :: (Members [Input String, Output String, Error String, Trace] m) => Eff m ()
+  :: (Members [Input String, Output String, Error FooErr, Trace] m) => Eff m ()
 test1 = do
   trace "debug"
   i <- input @String
   output "hello"
   output i
-  throwError "DIE"
+  throwError $ FooErr "ERR"
   trace "end"
 
 run1 :: IO ()
 run1 = test1
   & runInputConst @String "world"
-  & errorToExc @String
+  & errorToExc @FooErr
   & outputToTrace id
   & runTrace
   & runM
@@ -36,37 +38,43 @@ run1' = catch run1 $ \(ErrorExc (s :: String)) -> do
   print s
 
 test2 :: (Members [Input String, Output String, Trace] m) => Eff m ()
-test2 = handleError @String test1 $ \e -> output e
+test2 = handleError @FooErr test1 $ \e -> output $ show e
 
-run2 :: IO ([String], Either String ())
+run2 :: IO ([String], Either FooErr ())
 run2 = test2
   & runInputConst @String "howdy"
-  & runError @String
+  & runError @FooErr
   & runOutputList @String
   & runTrace
   & errorToExc @String
   & runM
 
-test3 :: Members '[State String, Error String] r => Eff r String
+test3 :: Members '[State String, Error FooErr] r => Eff r String
 test3 = do
   let throwing, catching
-        :: Members '[State String, Error String] r => Eff r String
+        :: Members '[State String, Error FooErr] r => Eff r String
       throwing = do
         modify (++ "-throw")
-        throwError "error"
+        throwError $ FooErr "error"
         get
       catching = do
         modify (++ "-catch")
         get
-  catchError @String throwing (\_ -> catching)
+  catchError @FooErr throwing (\e -> catching >> throwError e)
 
-run3 :: String
-run3 =
-  test3 & runError & evalState "Error before State" & fmap (either id id) & run
+runThrowM :: Either SomeException (String, String)
+runThrowM = test3
+  & runState "Error before State"
+  & errorToExc @FooErr
+  & runM
 
-run3' :: String
-run3' =
-  test3 & evalState "State before Error" & runError & fmap (either id id) & run
+runError' :: Either FooErr (String, String)
+runError' =
+  test3 & runState "State before Error" & runError @FooErr & run
+
+runError'' :: (String, Either FooErr String)
+runError'' =
+  test3 & runError @FooErr & runState "State after Error" & run
 
 decr :: Members '[State Int, Error ()] r => Eff r ()
 decr = do

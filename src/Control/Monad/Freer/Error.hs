@@ -28,7 +28,7 @@ import qualified Control.Exception as X
 import Control.Monad
 import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
-import Control.Monad.IO.Class
+import Control.Monad.Catch (MonadThrow(..))
 import qualified Control.Monad.Trans.Except as E
 
 import Data.Typeable
@@ -102,7 +102,7 @@ newtype ErrorExc e = ErrorExc e
   deriving ( Typeable, Eq )
 
 instance Typeable e => Show (ErrorExc e) where
-  show = mappend "WrappedError: " . show . typeRep
+  show = mappend "Control.Monad.Freer.ErrorExc: " . show . typeRep
 
 instance (Typeable e) => X.Exception (ErrorExc e)
 
@@ -113,9 +113,9 @@ instance (Typeable e) => X.Exception (ErrorExc e)
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
 errorToExc :: forall e m effs a.
-           (Typeable e, LastMember m effs, MonadIO m)
+           (Typeable e, LastMember m effs, MonadThrow m)
            => Eff (Error e ': effs) a
            -> Eff effs a
-errorToExc = subsume @m $ \case (Error e) -> liftIO $ X.throwIO $ ErrorExc e
+errorToExc = subsume @m $ \case (Error e) -> throwM $ ErrorExc e
 
 {-# INLINE errorToExc #-}

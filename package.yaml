@@ -60,6 +60,7 @@ library:
   - transformers-base
   - template-haskell >= 2.11 && < 2.15
   - transformers
+  - exceptions
   - microlens
   - mmorph
   - mtl
