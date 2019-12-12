@@ -106,8 +106,7 @@ instance Typeable e => Show (ErrorExc e) where
 
 instance (Typeable e) => X.Exception (ErrorExc e)
 
--- | Run an 'Error' effect as an 'IO' 'X.Exception' through final 'IO'. This
--- interpretation is significantly faster than 'runError'.
+-- | Throw an 'Error' as 'Control.Monad.Catch.MonadThrow' Exception through final monad.
 --
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
