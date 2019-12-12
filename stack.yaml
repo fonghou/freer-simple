@@ -1,4 +1,4 @@
-resolver: lts-13.30
+resolver: lts-14.16
 
 packages:
 - '.'
@@ -6,14 +6,8 @@ packages:
 extra-deps:
 - aeson-1.4.5.0
 - extensible-effects-5.0.0.1
-- polysemy-1.2.1.0
-- polysemy-plugin-0.2.3.0
-- type-errors-0.2.0.0@sha256:b8f97a0cf72f4fcdc9bfd02d753f84e65e5e5d165d53f82947a95cdcbd7f2945,2082
-- type-errors-pretty-0.0.0.0@sha256:45f5a96387aeea8210431ca1570d7fddbdba3aef8f83e8ad280ea0a0b018bc43,2301
-- unagi-chan-0.4.1.2@sha256:267bb3c4cf55b37bd9a6f4354f4e0876d592903b29d84b0b7b7c6a7e0c8af826,8963
-- first-class-families-0.6.0.0@sha256:9d2a2a0092dfb8fd0e688b0b6bf71242fbc393c028b0b669d25ed387667490c2,1304
-- th-abstraction-0.3.1.0@sha256:96042f6658f2dccfac03b33f0fd59f62b1f65b9b0a765d8a2ea6026f4081ee4a,1838
-- time-compat-1.9.2.2@sha256:9998dc1b77b5067572ab708e94750f1061152f342e92ad1aba38aae63581174d,4209
+- polysemy-1.2.3.0
+- polysemy-plugin-0.2.4.0
 
 flags: {}
 extra-package-dbs: []

@@ -52,6 +52,17 @@ default-extensions:
 
 dependencies:
 - base >= 4.9 && < 5
+- criterion
+- doctest
+- hspec
+- tasty
+- tasty-hunit
+- tasty-quickcheck
+- QuickCheck
+- free
+- polysemy
+- polysemy-plugin
+- unliftio
 
 library:
   source-dirs: src
@@ -69,7 +80,6 @@ library:
   - async
   - stm
   - streaming
-  - hspec
 
 executables:
   freer-examples:
@@ -77,29 +87,21 @@ executables:
     main: Main.hs
     dependencies:
     - freer-simple
-    - mtl
-    - unliftio
 
 tests:
   unit:
     source-dirs: tests
     main: Main.hs
     dependencies:
-    - QuickCheck
     - freer-simple
-    - tasty
-    - tasty-hunit
-    - tasty-quickcheck
+
   specs:
     source-dirs: specs
     main: Main.hs
     dependencies:
     - freer-simple
-    - hspec
-    - doctest
     - async
     - stm
-    - unliftio
     ghc-options:
     - -threaded
     - -rtsopts
@@ -113,10 +115,6 @@ benchmarks:
     main: Core.hs
     ghc-options: -O2 -fplugin=Polysemy.Plugin -fexpose-all-unfoldings -fspecialise-aggressively
     dependencies:
-    - criterion
-    - free
     - freer-simple
     - mtl
-    - polysemy
-    - polysemy-plugin
-    - stm
+    - free

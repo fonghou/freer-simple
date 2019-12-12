@@ -12,6 +12,7 @@ import Control.Monad.Freer (Eff, Member, runM)
 import Control.Monad.Freer.Resource
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Trace
+import Control.Monad.Freer.Input
 
 import Capitalize (Capitalize, capitalize, runCapitalize)
 import Console
