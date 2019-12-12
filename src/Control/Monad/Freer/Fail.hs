@@ -18,7 +18,7 @@ failToMonad :: forall m r a.
             (LastMember m r, MonadFail m)
             => Eff (Fail ': r) a
             -> Eff r a
-failToMonad = interpret $ \(Fail s) -> sendM @m (Fail.fail s)
+failToMonad = subsume @m $ \(Fail s) -> Fail.fail s
 
 failToError
   :: Member (Error e) r => (String -> e) -> Eff (Fail ': r) a -> Eff r a
