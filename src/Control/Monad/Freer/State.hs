@@ -89,6 +89,7 @@ runState :: forall s effs a. s -> Eff (State s ': effs) a -> Eff effs (s, a)
 runState = stateful stateNat
 
 {-# INLINE [3] runState #-}
+
 stateNat :: State s ~> S.StateT s (Eff r)
 stateNat = \case Get      -> S.get
                  Modify f -> S.modify' f
@@ -121,6 +122,8 @@ transactState m = do
   put s
   pure x
 
+{-# INLINE transactState #-}
+
 -- | Like 'transactState', but @s@ is specified by providing a 'Proxy'
 -- instead of requiring @TypeApplications@.
 transactState' :: forall s effs a.
@@ -132,12 +135,12 @@ transactState' _ = transactState @s
 
 {-# INLINE transactState' #-}
 
--- | Run 'State' effects by transforming it into 'ST'.
+-- | Run 'State' effects by transforming it into 'ST' state.
 stateToST :: forall s st effs a.
-              LastMember (ST st) effs
-              => s
-              -> Eff (State s ': effs) a
-              -> Eff effs (s, a)
+          LastMember (ST st) effs
+          => s
+          -> Eff (State s ': effs) a
+          -> Eff effs (s, a)
 stateToST s eff = do
   ref <- sendM $ newSTRef s
   res <- runStateSTRef ref eff

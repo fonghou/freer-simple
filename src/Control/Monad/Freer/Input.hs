@@ -2,14 +2,16 @@ module Control.Monad.Freer.Input
     ( Input(..)
     , input
     , runInputConst
-    , runInputList
     , runInputEff
+    , runInputList
+    , runInputList'
     ) where
 
 import Control.Monad.Freer
 import Control.Monad.Freer.Fail
 import Control.Monad.Freer.State
 
+import Data.Foldable ( for_ )
 import Data.List ( uncons )
 
 data Input i a where
@@ -34,16 +36,29 @@ runInputEff m = interpret $ \case Input -> m
 
 ------------------------------------------------------------------------------
 -- | Run an 'Input' effect by providing a different element of a list each
--- time. 'Fail' after the list is exhausted.
-runInputList :: forall i effs a.
-             Member Fail effs
-             => [i]
-             -> Eff (Input i ': effs) a
-             -> Eff effs a
+-- time. Returns 'Nothing' after the list is exhausted.
+runInputList
+  :: forall i effs a. [i] -> Eff (Input (Maybe i) ': effs) a -> Eff effs a
 runInputList is =
+  fmap snd . runState is . reinterpret (\case Input -> do
+                                                s <- gets uncons
+                                                for_ s $ put . snd
+                                                pure $ fmap fst s)
+
+{-# INLINE runInputList #-}
+
+------------------------------------------------------------------------------
+-- | Run an 'Input' effect by providing a different element of a list each
+-- time. 'Fail' after the list is exhausted.
+runInputList' :: forall i effs a.
+              Member Fail effs
+              => [i]
+              -> Eff (Input i ': effs) a
+              -> Eff effs a
+runInputList' is =
   fmap snd . runState is . reinterpret (\case Input -> do
                                                 Just (x, xs) <- gets uncons
                                                 put xs
                                                 pure x)
 
-{-# INLINE runInputList #-}
+{-# INLINE runInputList' #-}
