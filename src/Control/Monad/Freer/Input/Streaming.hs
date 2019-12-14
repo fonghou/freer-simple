@@ -1,6 +1,7 @@
 module Control.Monad.Freer.Input.Streaming
     ( module Control.Monad.Freer.Input
     , runInputStream
+    , runInputStream'
     , yieldInput
     ) where
 
@@ -29,6 +30,20 @@ runInputStream stream = evalState (Just stream)
            Just (i, s') -> do
              put $ Just s'
              pure $ Just i)
+
+runInputStream' :: forall i r a.
+                (forall x. S.Stream (Of i) (Eff r) x)
+                -> Eff (Input i ': r) a
+                -> Eff r a
+runInputStream' stream = evalState (stream :: S.Stream (Of i) (Eff r) ())
+  . reinterpret
+    (\Input -> do
+      s :: S.Stream (Of i) (Eff r) () <- get
+      raise (S.uncons s) >>= \case
+        Nothing -> error "runInputStream': impossible!"
+        Just (i, s') -> do
+          put s'
+          pure i)
 
 yieldInput :: Member (Input i) r => S.Stream (Of i) (Eff r) ()
 yieldInput = S.lift input >>= S.yield
