@@ -79,7 +79,6 @@ library:
   - random
   - async
   - stm
-  - streaming
 
 executables:
   freer-examples:
