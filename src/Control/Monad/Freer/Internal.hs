@@ -53,6 +53,7 @@ module Control.Monad.Freer.Internal
     ) where
 
 import Control.Monad.Base ( MonadBase, liftBase )
+import Control.Monad.Catch (MonadThrow(..))
 import Control.Monad.Fail
 import Control.Monad.IO.Class ( MonadIO, liftIO )
 import Control.Monad.Morph ( MFunctor(..) )
@@ -116,6 +117,9 @@ instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
 instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
   liftIO = sendM . liftIO
   {-# INLINE liftIO #-}
+
+instance (MonadThrow m, LastMember m effs) => MonadThrow (Eff effs) where
+  throwM = sendM . throwM
 
 instance MonadTrans Freer where
   lift = liftEff
