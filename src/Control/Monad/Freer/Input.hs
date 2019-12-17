@@ -39,11 +39,11 @@ runInputEff m = interpret $ \case Input -> m
 -- time. Returns 'Nothing' after the list is exhausted.
 runInputList
   :: forall i effs a. [i] -> Eff (Input (Maybe i) ': effs) a -> Eff effs a
-runInputList is =
-  fmap snd . runState is . reinterpret (\case Input -> do
-                                                s <- gets uncons
-                                                for_ s $ put . snd
-                                                pure $ fmap fst s)
+runInputList is = fmap snd . runState is . reinterpret
+  (\case Input -> do
+                    s <- gets uncons
+                    for_ s $ put . snd
+                    pure $ fmap fst s)
 
 {-# INLINE runInputList #-}
 
@@ -55,10 +55,10 @@ runInputList' :: forall i effs a.
               => [i]
               -> Eff (Input i ': effs) a
               -> Eff effs a
-runInputList' is =
-  fmap snd . runState is . reinterpret (\case Input -> do
-                                                Just (x, xs) <- gets uncons
-                                                put xs
-                                                pure x)
+runInputList' is = fmap snd . runState is . reinterpret
+  (\case Input -> do
+                    Just (x, xs) <- gets uncons
+                    put xs
+                    pure x)
 
 {-# INLINE runInputList' #-}
