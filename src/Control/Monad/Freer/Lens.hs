@@ -29,31 +29,27 @@ import Lens.Micro.Type ( ASetter, Getting )
 
 view :: forall r a eff. (Member (Reader r) eff) => Getting a r a -> Eff eff a
 view l = Reader.asks @r (Lens.view l)
-
 {-# INLINE view #-}
+
 views :: forall r a b eff.
       (Member (Reader r) eff)
       => Getting a r a
       -> (a -> b)
       -> Eff eff b
 views l f = fmap f (Reader.asks @r (Lens.view l))
-
 {-# INLINE views #-}
+
 use :: forall s a eff. (Member (State s) eff) => Getting a s a -> Eff eff a
 use l = State.gets @s (Lens.view l)
-
 {-# INLINE use #-}
+
 uses :: forall s a b eff.
      (Member (State s) eff)
      => Getting a s a
      -> (a -> b)
      -> Eff eff b
 uses l f = fmap f (State.gets @s (Lens.view l))
-
 {-# INLINE uses #-}
-infixr 4 .=
-
-(.=) = assign
 
 assign, (.=) :: forall s a b eff.
              (Member (State s) eff)
@@ -61,11 +57,7 @@ assign, (.=) :: forall s a b eff.
              -> b
              -> Eff eff ()
 assign l b = State.modify @s (Lens.set l b)
-
 {-# INLINE assign #-}
-infixr 4 %=
-
-(%=) = modifying
 
 modifying, (%=) :: forall s a b eff.
                 (Member (State s) eff)
@@ -73,35 +65,39 @@ modifying, (%=) :: forall s a b eff.
                 -> (a -> b)
                 -> Eff eff ()
 modifying l f = State.modify @s (Lens.over l f)
-
 {-# INLINE modifying #-}
+
+infixr 4 .=
+(.=) = assign
+{-# INLINE (.=) #-}
+
+
+infixr 4 %=
+(%=) = modifying
+{-# INLINE (%=) #-}
+
+infix 4 +=
 (+=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
 l += x = l %= (+ x)
-
 {-# INLINE (+=) #-}
-infix 4 +=
 
-(-=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
-l -= x = l %= (subtract x)
-
-{-# INLINE (-=) #-}
 infix 4 -=
+(-=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
+l -= x = l %= subtract x
+{-# INLINE (-=) #-}
 
+infix 4 *=
 (*=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
 l *= x = l %= (* x)
-
 {-# INLINE (*=) #-}
-infix 4 *=
 
+infix 4 //=
 (//=)
   :: (Member (State s) eff, Fractional a) => ASetter s s a a -> a -> Eff eff ()
 l //= x = l %= (/ x)
-
 {-# INLINE (//=) #-}
-infix 4 //=
 
+infix 4 <>=
 (<>=) :: (Member (State s) eff, Monoid a) => ASetter s s a a -> a -> Eff eff ()
 l <>= x = l %= (<> x)
-
 {-# INLINE (<>=) #-}
-infix 4 <>=
