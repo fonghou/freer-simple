@@ -16,6 +16,7 @@ module Control.Monad.Freer.Error
     , ErrorExc(..)
     , throwError
     , catchError
+    , catchJust
     , handleError
     , liftEither
     , liftEitherM
@@ -46,8 +47,7 @@ throwError e = send (Error e)
 -- | Lift  an 'Either' into an 'Error' effect.
 liftEither
   :: forall e effs a. Member (Error e) effs => Either e a -> Eff effs a
-liftEither (Left e) = throwError e
-liftEither (Right a) = pure a
+liftEither = either throwError return
 
 {-# INLINE liftEither #-}
 
@@ -97,6 +97,22 @@ mapError :: forall e1 e2 r a.
 mapError f m = handleError @e1 m $ \e -> throwError (f e)
 
 {-# INLINE mapError #-}
+
+------------------------------------------------------------------------------
+-- | The function @'catchJust'@ is like @'catchError'@, but it takes an extra argument
+-- which is an exception predicate, a function which selects which type of exceptions
+-- we're interested in.
+catchJust :: forall e b effs a.
+           Member (Error e) effs
+           => (e -> Maybe b)
+           -> Eff effs a
+           -> (b -> Eff effs a)
+           -> Eff effs a
+catchJust f m k = catchError m $ \ e -> case f e of
+  Nothing -> throwError e
+  Just x  -> k x
+
+{-# INLINE catchJust #-}
 
 newtype ErrorExc e = ErrorExc e
   deriving ( Typeable, Eq )

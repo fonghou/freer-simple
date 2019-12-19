@@ -10,6 +10,9 @@ module Control.Monad.Freer.Lens
     , uses
     , assign
     , modifying
+    , catching
+    , catching_
+    , trying
     , (.=)
     , (%=)
     , (+=)
@@ -22,10 +25,13 @@ module Control.Monad.Freer.Lens
 import Control.Monad.Freer
 import Control.Monad.Freer.Reader as Reader
 import Control.Monad.Freer.State as State
+import Control.Monad.Freer.Error (Error, catchJust)
 
 import qualified Lens.Micro as Lens
 import qualified Lens.Micro.Extras as Lens
 import Lens.Micro.Type ( ASetter, Getting )
+
+import qualified Data.Monoid as M
 
 view :: forall r a eff. (Member (Reader r) eff) => Getting a r a -> Eff eff a
 view l = Reader.asks @r (Lens.view l)
@@ -101,3 +107,28 @@ infix 4 <>=
 (<>=) :: (Member (State s) eff, Monoid a) => ASetter s s a a -> a -> Eff eff ()
 l <>= x = l %= (<> x)
 {-# INLINE (<>=) #-}
+
+catching :: forall e a eff r.
+           Member (Error e) eff
+           => Getting (M.First a) e a
+           -> Eff eff r
+           -> (a -> Eff eff r)
+           -> Eff eff r
+catching l = catchJust (Lens.preview l)
+{-# INLINE catching #-}
+
+catching_ :: forall e a eff r.
+           Member (Error e) eff
+           => Getting (M.First a) e a
+           -> Eff eff r
+           -> Eff eff r
+           -> Eff eff r
+catching_ l a b = catchJust (Lens.preview l) a (const b)
+{-# INLINE catching_ #-}
+
+trying :: Member (Error e) eff
+       => Getting (M.First a) e a
+       -> Eff eff r
+       -> Eff eff (Either a r)
+trying l m = catching l (fmap Right m) (return . Left)
+{-# INLINE trying #-}
