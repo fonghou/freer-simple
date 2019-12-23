@@ -20,7 +20,7 @@ module Control.Monad.Freer.Reader
     , local
       -- * Reader Handlers
     , runReader
-    , runMonadReader
+    , runReaderM
     ) where
 
 import Control.Monad.Freer
@@ -58,14 +58,14 @@ runReader r = interpret (\Ask -> pure r)
 
 {-# INLINE runReader #-}
 
--- | Delegate 'Reader' effect to MonadReader.
-runMonadReader :: forall r m env effs a.
+-- | Delegate 'Reader' effect to the final Reader monad.
+runReaderM :: forall r m env effs a.
               (MTL.MonadReader env m, HasType r env, LastMember m effs)
               => Eff (Reader r ': effs) a
               -> Eff effs a
-runMonadReader = subsume @m (\Ask -> MTL.asks $ view (typed @r))
+runReaderM = subsume @m (\Ask -> MTL.asks $ view (typed @r))
 
-{-# INLINE runMonadReader #-}
+{-# INLINE runReaderM #-}
 
 -- | Locally rebind the value in the dynamic environment.
 --
