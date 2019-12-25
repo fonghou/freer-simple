@@ -25,12 +25,7 @@ instance Monad (Freer f) where
   Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
                                -- m a   >>= (\a -> m b)
 
--- interpret :: (forall x. f x -> Eff r x) -> Eff (f ': r) a -> Eff r a
--- interpret f (Freer m) = Freer $ \k -> m $ \u ->
---   case decomp u of
---     Left x -> k x
---     Right y -> runFreer (f y) k
---
+-- foldFreer = flip runFreer . interpret g . interpret f
 
 newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
 
