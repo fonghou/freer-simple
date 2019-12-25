@@ -8,40 +8,44 @@ data Free f a = Pure a | Free (f (Free f a))
 instance Functor f => Monad (Free f) where
   return = Pure
   Pure a >>= f = f a
-  Free m >>= f = Free ((>>= f) <$> m)
+  Free m >>= f = Free (fmap (>>= f) m)
+                    -- slow!
 
 foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
 foldFree _ (Pure a)  = return a
 foldFree f (Free as) = f as >>= foldFree f
 
-newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
-
+-- flip FoldFree
 newtype Freer f a = Freer
   { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
 
-instance Monad (F f) where
-  F m >>= f    = F      $ \cont kf -> m (\a -> runF (f a) cont kf) kf
-  return a     = F (\cont _ -> cont a)
-
+-- ReaderT e m where e ~ (forall x. f x -> m x)
 instance Monad (Freer f) where
-  Freer m >>= f = Freer $ \cont -> m cont >>= (\a -> runFreer (f a) cont)
   return a      = Freer (\_ -> return a)
+  Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
+                               -- m a   >>= (\a -> m b)
 
-foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
-foldF f (F m) = m return (join . f)
-
--- interpret :: (forall x. eff x -> Eff r x) -> Eff (eff ': r) a -> Eff r a
+-- interpret :: (forall x. f x -> Eff r x) -> Eff (f ': r) a -> Eff r a
 -- interpret f (Freer m) = Freer $ \k -> m $ \u ->
 --   case decomp u of
 --     Left x -> k x
 --     Right y -> runFreer (f y) k
 --
 
-newtype Cont r a = Cont { runCont :: (a -> r) -> r }
+newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
+
+instance Monad (F f) where
+  return a     = F (\_return _ -> _return a)
+  F m >>= f    = F $ \_return kf -> m (\a -> runF (f a) _return kf) kf
+
+foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
+foldF f (F m) = m return (join . f)
+
+newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
 
 instance Monad (Cont r) where
-  Cont m >>= f = Cont (\cont -> m (\a -> runCont (f a) cont))
-  return a     = Cont (\cont -> cont a)
+  return a     = Cont (\_return -> _return a)
+  Cont m >>= f = Cont $ \_return -> m $ \a -> f a >>- _return
 
 type Id a = forall r. Cont r a
 runId (Cont m) = m id
@@ -69,6 +73,9 @@ type ContT r m a = Cont (m r) a
 -- (>>=) :: Monad m => m a -> (a -> m r) -> m r
 lift :: Monad m => m a -> ContT r m a
 lift m  = Cont (m >>=)
+
+type CodensityT m a = forall r. Cont (m r) a
+type List' a = CodensityT [] a
 
 -------------------------------------------------------------------------------
 instance Functor (Cont r) where
