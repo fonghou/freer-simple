@@ -13,9 +13,11 @@ instance Functor f => Monad (Free f) where
 
 foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
 foldFree _ (Pure a)  = return a
-foldFree f (Free as) = f as >>= foldFree f
+foldFree alg (Free as) = alg as >>= foldFree alg
 
--- flip FoldFree
+-- foldFreer alg = flip runFreer . interpret g . interpret f
+
+-- flip foldFree/foldF
 newtype Freer f a = Freer
   { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
 
@@ -25,16 +27,14 @@ instance Monad (Freer f) where
   Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
                                -- m a   >>= (\a -> m b)
 
--- foldFreer = flip runFreer . interpret g . interpret f
-
 newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
 
 instance Monad (F f) where
   return a     = F (\_return _ -> _return a)
-  F m >>= f    = F $ \_return kf -> m (\a -> runF (f a) _return kf) kf
+  F m >>= f    = F $ \_return alg -> m (\a -> runF (f a) _return alg) alg
 
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
-foldF f (F m) = m return (join . f)
+foldF alg (F m) = m return (join . alg)
 
 newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
 
