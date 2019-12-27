@@ -15,35 +15,35 @@ foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
 foldFree _ (Pure a)  = return a
 foldFree alg (Free as) = alg as >>= foldFree alg
 
--- foldFreer alg = flip runFreer . interpret g . interpret f
-
--- flip foldFree/foldF
-newtype Freer f a = Freer
-  { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
-
--- ReaderT e m where e ~ (forall x. f x -> m x)
-instance Monad (Freer f) where
-  return a      = Freer (\_ -> return a)
-  Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
-                               -- m a   >>= (\a -> m b)
-
+-----------------------------------------------------------------------------
 newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
-
-instance Monad (F f) where
-  return a     = F (\_return _ -> _return a)
-  F m >>= f    = F $ \_return alg -> m (\a -> runF (f a) _return alg) alg
 
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
 foldF alg (F m) = m return (join . alg)
 
+newtype Freer f a = Freer
+  { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
+
+-- ReaderT e m where
+-- e ~ (forall x. f x -> m x)
+-- alg = interpret g . interpret f
+instance Monad (Freer f) where
+  return a      = Freer (\_ -> return a)
+  Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
+                               -- m a   >>= (\a -> m b)
+instance Monad (F f) where
+  return a     = F (\_return _ -> _return a)
+  F m >>= f    = F $ \_return alg -> m (\a -> runF (f a) _return alg) alg
+
+-----------------------------------------------------------------------------
 newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
 
 instance Monad (Cont r) where
   return a     = Cont (\_return -> _return a)
   Cont m >>= f = Cont $ \_return -> m $ \a -> f a >>- _return
 
-type Id a = forall r. Cont r a
-runId (Cont m) = m id
+type Pure a = forall r. Cont r a
+runPure (Cont m) = m id
 
 type Except e a = forall r. Cont (Either e r) a
 runExcept (Cont m) = m Right
