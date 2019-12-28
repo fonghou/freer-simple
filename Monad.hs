@@ -21,16 +21,18 @@ newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
 foldF alg (F m) = m return (join . alg)
 
+-- runFreer = flip foldF
 newtype Freer f a = Freer
   { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
 
--- ReaderT e m where
--- e ~ (forall x. f x -> m x)
+-- ReaderT alg m where
+-- alg ~ (forall x. f x -> m x)
 -- alg = interpret g . interpret f
 instance Monad (Freer f) where
   return a      = Freer (\_ -> return a)
   Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
-                               -- m a   >>= (\a -> m b)
+                       -- (foldF alg m) >>= (\a -> foldF alg (f a))
+
 instance Monad (F f) where
   return a     = F (\_return _ -> _return a)
   F m >>= f    = F $ \_return alg -> m (\a -> runF (f a) _return alg) alg
