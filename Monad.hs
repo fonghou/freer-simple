@@ -3,17 +3,17 @@ module Monad where
 import Control.Monad (join)
 
 data List a   = Nil    | Cons a (List a)
-data Free f a = Pure a | Free (f (Free f a))
+data Free f a = Pure a | Join (f (Free f a))
 
 instance Functor f => Monad (Free f) where
   return = Pure
   Pure a >>= f = f a
-  Free m >>= f = Free (fmap (>>= f) m)
+  Join m >>= f = Join (fmap (>>= f) m)
                     -- slow!
 
 foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
 foldFree _ (Pure a)  = return a
-foldFree alg (Free as) = alg as >>= foldFree alg
+foldFree alg (Join as) = alg as >>= foldFree alg
 
 -----------------------------------------------------------------------------
 newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }

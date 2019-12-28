@@ -19,7 +19,7 @@ import           Control.Monad.Freer.Internal
 
 ------------------------------------------------------------------------------
 -- | Interpret an effect as a monadic action in 'Eff r'.
-interpret :: (eff ~> Eff r) -> Eff (eff ': r) ~> Eff r
+interpret :: (forall x. eff x -> Eff r x) -> Eff (eff ': r) a -> Eff r a
 interpret f (Freer m) = Freer $ \k -> m $ \u ->
   case decomp u of
     Left x -> k x
