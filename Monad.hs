@@ -16,6 +16,7 @@ foldFree _ (Pure a)  = return a
 foldFree alg (Join as) = alg as >>= foldFree alg
 
 -----------------------------------------------------------------------------
+-- ReaderT (f r -> r) (Cont r) a
 newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
 
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a

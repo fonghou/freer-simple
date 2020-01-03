@@ -1,0 +1,14 @@
+:set -Wall
+:set -fno-warn-type-defaults
+:set -fno-warn-unused-imports
+:set -fno-warn-unused-do-bind
+:set -fno-warn-unused-top-binds
+:set -fno-warn-partial-type-signatures
+-- :set -fdefer-type-errors
+
+-- :set -ddump-deriv
+-- :set -ddump-splices
+-- :set -dsuppress-uniques
+-- :set -dsuppress-module-prefixes
+
+:set -iapp:src
