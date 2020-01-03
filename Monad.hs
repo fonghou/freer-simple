@@ -72,8 +72,8 @@ type ContT r m a = Cont (m r) a
 lift :: Monad m => m a -> ContT r m a
 lift m  = Cont (m >>=)
 
-type CodensityT m a = forall r. Cont (m r) a
-type List' a = CodensityT [] a
+type Codensity m a = forall r. Cont (m r) a
+type F' f a = Codensity (Free f) a
 
 -------------------------------------------------------------------------------
 instance Functor (Cont r) where
