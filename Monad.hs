@@ -1,6 +1,6 @@
 module Monad where
 
-import Control.Monad (join)
+import Control.Monad (join, liftM2)
 
 data List a   = Nil    | Cons a (List a)
 data Free f a = Pure a | Join (f (Free f a))
@@ -44,6 +44,15 @@ newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
 instance Monad (Cont r) where
   return a     = Cont (\_return -> _return a)
   Cont m >>= f = Cont $ \_return -> m $ \a -> f a >>- _return
+
+runC :: Cont r r -> r
+runC m = m >>- id
+
+reset :: Cont a a -> Cont r a
+reset = return . runC
+
+shift :: ((a -> r) -> Cont r r) -> Cont r a
+shift f = Cont (runC . f)
 
 type Pure a = forall r. Cont r a
 runPure (Cont m) = m id
