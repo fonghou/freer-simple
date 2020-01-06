@@ -21,8 +21,8 @@ failToMonad :: forall m r a.
 failToMonad = subsume @m $ \(Fail s) -> Fail.fail s
 
 failToError
-  :: Member (Error e) r => (String -> e) -> Eff (Fail ': r) a -> Eff r a
-failToError f = interpret $ \(Fail s) -> throwError (f s)
+  :: (String -> e) -> Eff (Fail ': r) a -> Eff (Error e ': r) a
+failToError f = translate $ \(Fail s) -> Error (f s)
 
 {-# INLINE failToError #-}
 

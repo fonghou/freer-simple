@@ -225,6 +225,7 @@ module Control.Monad.Freer
     , reinterpret3
     , reinterpret4
     , subsume
+    , translate
     , transform
       -- * Re-exported bindings
     , type (~>)
@@ -235,5 +236,5 @@ import Control.Monad.Freer.Internal
        , raiseUnder2, raiseUnder3, raiseUnder4, run, runM, send, sendM )
 import Control.Monad.Freer.Interpretation
        ( interpose, interposeState, interpret, reinterpret, reinterpret2
-       , reinterpret3, reinterpret4, subsume, transform )
+       , reinterpret3, reinterpret4, subsume, translate, transform )
 import Control.Natural ( type (~>) )

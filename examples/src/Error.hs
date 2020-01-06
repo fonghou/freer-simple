@@ -22,7 +22,7 @@ test1 = do
   i <- input @String
   output "hello"
   output i
-  throwError $ FooErr "ERR"
+  throwError $ FooErr "test1"
   trace "end"
 
 run1 :: IO ()
@@ -55,7 +55,7 @@ test3 = do
         :: Members '[State String, Error FooErr] r => Eff r String
       throwing = do
         modify (++ "-throw")
-        throwError $ FooErr "error"
+        throwError $ FooErr "test3"
         get
       catching = do
         modify (++ "-catch")
