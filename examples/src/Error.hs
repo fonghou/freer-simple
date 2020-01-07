@@ -11,7 +11,7 @@ import Control.Monad.Freer.Trace
 
 import Data.Function
 
-import UnliftIO.Exception as X
+import Control.Exception as X
 
 newtype FooErr = FooErr String deriving (Show)
 

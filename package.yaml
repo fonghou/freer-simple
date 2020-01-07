@@ -62,7 +62,6 @@ dependencies:
 - free
 - polysemy
 - polysemy-plugin
-- unliftio
 
 library:
   source-dirs: src

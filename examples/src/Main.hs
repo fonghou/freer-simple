@@ -2,7 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main (main) where
 
-import qualified UnliftIO.Exception as X
+import qualified Control.Exception as X
 import Control.Monad (forever, when)
 import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
@@ -61,7 +61,7 @@ mainConsoleB = runM (runCapitalize (runConsoleM capitalizingService))
 
 mainBracket :: IO ()
 mainBracket =
-  X.handleAny (\e -> print e) $
+  X.handle @X.SomeException (\e -> print e) $
     runResource (errorToExc @String . runTrace) $ do
       bracket (trace "alloc") (const $ trace "dealloc") $ const $ do
         trace "hi"
