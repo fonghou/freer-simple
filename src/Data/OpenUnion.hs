@@ -23,6 +23,7 @@ module Data.OpenUnion
     , weaken
     , extract
       -- * Open Union Membership Constraints
+    , FindElem
     , Member(..)
     , Members
     , Members'
@@ -31,7 +32,7 @@ module Data.OpenUnion
     ) where
 
 import Data.Kind ( Constraint )
-import Data.OpenUnion.Internal ( (:++:), Member(inj, prj), Union
+import Data.OpenUnion.Internal ( (:++:), FindElem, Member(inj, prj), Union
                                , Weakens(weakens), decomp, extract, weaken )
 
 import GHC.TypeLits

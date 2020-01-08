@@ -188,6 +188,7 @@ module Control.Monad.Freer
     , Members
     , Members'
     , LastMember
+    , FindElem
       -- ** Sending Arbitrary Effects
     , send
     , sendM
@@ -232,7 +233,7 @@ module Control.Monad.Freer
     ) where
 
 import Control.Monad.Freer.Internal
-       ( Eff, LastMember, Member, Members, Members', raise, raiseUnder
+       ( Eff, LastMember, Member, Members, Members', FindElem, raise, raiseUnder
        , raiseUnder2, raiseUnder3, raiseUnder4, run, runM, send, sendM )
 import Control.Monad.Freer.Interpretation
        ( interpose, interposeState, interpret, reinterpret, reinterpret2
