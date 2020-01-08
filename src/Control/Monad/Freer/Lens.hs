@@ -15,11 +15,12 @@ module Control.Monad.Freer.Lens
     , trying
     , (.=)
     , (%=)
+    , (<>=)
+    , (<~)
     , (+=)
     , (-=)
     , (*=)
     , (//=)
-    , (<>=)
     ) where
 
 import Control.Monad.Freer
@@ -73,40 +74,41 @@ modifying, (%=) :: forall s a b eff.
 modifying l f = State.modify @s (Lens.over l f)
 {-# INLINE modifying #-}
 
-infixr 4 .=
+infix 4 .=, %=, +=, -=, *=, //=, <>=
+
 (.=) = assign
 {-# INLINE (.=) #-}
 
-
-infixr 4 %=
 (%=) = modifying
 {-# INLINE (%=) #-}
 
-infix 4 +=
 (+=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
 l += x = l %= (+ x)
 {-# INLINE (+=) #-}
 
-infix 4 -=
 (-=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
 l -= x = l %= subtract x
 {-# INLINE (-=) #-}
 
-infix 4 *=
 (*=) :: (Member (State s) eff, Num a) => ASetter s s a a -> a -> Eff eff ()
 l *= x = l %= (* x)
 {-# INLINE (*=) #-}
 
-infix 4 //=
 (//=)
   :: (Member (State s) eff, Fractional a) => ASetter s s a a -> a -> Eff eff ()
 l //= x = l %= (/ x)
 {-# INLINE (//=) #-}
 
-infix 4 <>=
 (<>=) :: (Member (State s) eff, Monoid a) => ASetter s s a a -> a -> Eff eff ()
 l <>= x = l %= (<> x)
 {-# INLINE (<>=) #-}
+
+-- | Run a monadic action, and set all of the targets of a 'Lens', @Setter@
+-- or 'Traversal' to its result.
+infixr 2 <~
+(<~) :: (Member (State s) eff) => ASetter s s a b -> Eff eff b -> Eff eff ()
+setter <~ act = act >>= assign setter
+{-# INLINE (<~) #-}
 
 catching :: forall e a eff r.
            Member (Error e) eff
@@ -126,7 +128,8 @@ catching_ :: forall e a eff r.
 catching_ l a b = catchJust (Lens.preview l) a (const b)
 {-# INLINE catching_ #-}
 
-trying :: Member (Error e) eff
+trying :: forall e a eff r.
+       Member (Error e) eff
        => Getting (M.First a) e a
        -> Eff eff r
        -> Eff eff (Either a r)
