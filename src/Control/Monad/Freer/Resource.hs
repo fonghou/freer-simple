@@ -83,7 +83,7 @@ runBracket (Freer m) = runResourceT $ m $ \u -> case decomp u of
 runResource :: forall r.
             (Eff r ~> Eff '[IO])
             -- ^ Strategy for lowering an effect stack down to [IO].
-            -- This is usually some composition of runA . runB. 'errorToExc'
+            -- This is usually some composition of runA . runB . 'errorToExc'
             -> Bracketed r ~> IO
 runResource f m = runBracket $ liftBracket f m
 {-# INLINE runResource #-}

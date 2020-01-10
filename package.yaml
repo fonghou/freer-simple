@@ -71,7 +71,6 @@ library:
   - template-haskell >= 2.11 && < 2.15
   - transformers
   - exceptions
-  - generic-lens
   - microlens
   - mmorph
   - mtl

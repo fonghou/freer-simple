@@ -12,18 +12,18 @@ import Control.Monad.Freer.Internal ( Fail(..) )
 
 runFail :: Eff (Fail ': r) a -> Eff r (Either String a)
 runFail = runError . reinterpret (\(Fail s) -> throwError s)
-
 {-# INLINE runFail #-}
+
 failToMonad :: forall m r a.
             (LastMember m r, MonadFail m)
             => Eff (Fail ': r) a
             -> Eff r a
 failToMonad = subsume @m $ \(Fail s) -> Fail.fail s
+{-# INLINE failToMonad #-}
 
 failToError
   :: (String -> e) -> Eff (Fail ': r) a -> Eff (Error e ': r) a
 failToError f = translate $ \(Fail s) -> Error (f s)
-
 {-# INLINE failToError #-}
 
 
