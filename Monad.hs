@@ -1,6 +1,6 @@
 module Monad where
 
-import Control.Monad (join, liftM2)
+import Control.Monad (join)
 
 data List a   = Nil    | Cons a (List a)
 data Free f a = Pure a | Join (f (Free f a))
@@ -55,15 +55,21 @@ shift :: ((a -> r) -> Cont r r) -> Cont r a
 shift f = Cont (runC . f)
 
 type Pure a = forall r. Cont r a
+runPure :: Cont r r -> r
 runPure (Cont m) = m id
 
 type Except e a = forall r. Cont (Either e r) a
+runExcept :: Cont (Either a b) b -> Either a b
 runExcept (Cont m) = m Right
-throw  e = Cont (\ _k -> Left e)
+throw :: a -> Cont (Either a b) r
+throw e = Cont (\ _k -> Left e)
 
 type State s a = forall r. Cont (s -> r) a
+runState :: Cont (b -> (a, b)) a -> b -> (a, b)
 runState (Cont m) = m (,)
+get :: Cont (s -> s) s
 get = Cont (\k s -> k s s)
+put :: s -> Cont (s -> s) ()
 put s = Cont (\k _s -> k () s)
 
 type ListT m a = Cont (m ()) a
