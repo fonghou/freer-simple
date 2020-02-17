@@ -51,7 +51,7 @@ execWriter
 execWriter = fmap fst . runWriter
 {-# INLINE execWriter #-}
 
--- | Transform a 'Trace' effect into a 'Output' 'String' effect.
+-- | Transform a 'Writer' effect into a 'Output' effect.
 writerToOutput :: Member (Output o) effs => Eff (Writer o ': effs) ~> Eff effs
 writerToOutput = interpret $ \case Tell m -> output m
 {-# INLINE writerToOutput #-}
