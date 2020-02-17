@@ -61,14 +61,13 @@ dependencies:
 - QuickCheck
 - free
 - polysemy
-- polysemy-plugin
 
 library:
   source-dirs: src
   dependencies:
   - natural-transformation >= 0.2
   - transformers-base
-  - template-haskell >= 2.11 && < 2.15
+  - template-haskell >= 2.11
   - transformers
   - exceptions
   - microlens
@@ -111,7 +110,7 @@ benchmarks:
   core:
     source-dirs: bench
     main: Core.hs
-    ghc-options: -O2 -fplugin=Polysemy.Plugin -fexpose-all-unfoldings -fspecialise-aggressively
+    ghc-options: -O2 -fexpose-all-unfoldings -fspecialise-aggressively
     dependencies:
     - freer-simple
     - mtl
