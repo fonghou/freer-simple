@@ -61,6 +61,7 @@ dependencies:
 - QuickCheck
 - free
 - polysemy
+- fused-effects
 
 library:
   source-dirs: src

@@ -19,6 +19,13 @@ packages:
   original:
     hackage: extensible-effects-5.0.0.1
 - completed:
+    hackage: fused-effects-1.0.0.1@sha256:efbee8b3a7e1e8efdaaaa28208d1537b33a82518b86e2f945d3b5c1a5025f6c0,4726
+    pantry-tree:
+      size: 5286
+      sha256: 9e212bde9264fe726bd374ccfed5c39cc47316c74621e8f5fa4f561b37635a83
+  original:
+    hackage: fused-effects-1.0.0.1
+- completed:
     hackage: polysemy-1.3.0.0@sha256:2254c11bed4f6e4b115fa470f396f9df4c7d2d3431b02bdbde962300d6892bf1,5919
     pantry-tree:
       size: 4309

@@ -16,6 +16,11 @@ import Control.Monad.Freer.State (get, put, runState)
 import qualified Polysemy as Poly
 import qualified Polysemy.State as Poly
 import qualified Polysemy.Error as Poly
+
+import qualified Control.Algebra as Eff
+import qualified Control.Carrier.State.Strict as Eff
+import qualified Control.Carrier.Error.Either as Eff
+
 --------------------------------------------------------------------------------
                         -- State Benchmarks --
 --------------------------------------------------------------------------------
@@ -31,7 +36,10 @@ oneGetPoly n = Poly.run (Poly.runState n Poly.get)
 
 
 countDown :: Int -> (Int, Int)
-countDown start = run (runState start go)
+countDown n = if n <= 0 then (n, n) else countDown (n - 1)
+
+countDownFreer :: Int -> (Int, Int)
+countDownFreer start = run (runState start go)
   where go = get >>= (\n -> if n <= 0 then pure n else put (n-1) >> go)
 
 countDownPoly :: Int -> (Int, Int)
@@ -42,6 +50,9 @@ countDownMTL :: Int -> (Int, Int)
 countDownMTL = MTL.runState go
   where go = MTL.get >>= (\n -> if n <= 0 then pure n else MTL.put (n-1) >> go)
 
+countDownEff :: Int -> (Int, Int)
+countDownEff start = Eff.run (Eff.runState start go)
+  where go = Eff.get >>= (\n -> if n <= 0 then pure n else Eff.put (n-1) >> go)
 
 --------------------------------------------------------------------------------
                        -- Exception + State --
@@ -57,6 +68,10 @@ countDownExcPoly start = Poly.run $ Poly.runError (Poly.runState start go)
 countDownExcMTL :: Int -> Either String (Int,Int)
 countDownExcMTL = MTL.runStateT go
   where go = MTL.get >>= (\n -> if n <= (0 :: Int) then MTL.throwError "wat" else MTL.put (n-1) >> go)
+
+countDownExcEff :: Int -> Either String (Int,Int)
+countDownExcEff start = Eff.run $ Eff.runError (Eff.runState start go)
+  where go = Eff.get >>= (\n -> if n <= (0 :: Int) then Eff.throwError "wat" else Eff.put (n-1) >> go)
 
 --------------------------------------------------------------------------------
                           -- Freer: Interpreter --
@@ -141,12 +156,15 @@ main =
       , bench "polysemy.get"       $ whnf oneGetPoly 0
     ],
     bgroup "Countdown Bench" [
-        bench "mtl.State"      $ whnf countDownMTL 10000
-      , bench "freer.State"    $ whnf countDown 10000
+        bench "reference"      $ whnf countDown 10000
+      , bench "mtl.State"      $ whnf countDownMTL 10000
+      , bench "fused.State"      $ whnf countDownEff 10000
+      , bench "freer.State"    $ whnf countDownFreer 10000
       , bench "polysemy.State"    $ whnf countDownPoly 10000
     ],
     bgroup "Countdown+Except Bench" [
         bench "mtl.ExceptState" $ whnf countDownExcMTL 10000
+      , bench "fused.ExceptState" $ whnf countDownExcEff 10000
       , bench "freer.ExcState"  $ whnf countDownExc 10000
       , bench "polysemy.ExcState"  $ whnf countDownExcPoly 10000
     ],
