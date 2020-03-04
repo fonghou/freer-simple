@@ -16,18 +16,18 @@ foldFree _ (Pure a)  = return a
 foldFree alg (Join as) = alg as >>= foldFree alg
 
 -----------------------------------------------------------------------------
--- ReaderT (f r -> r) (Cont r) a
-newtype F f a = F { runF :: forall r. (a -> r) -> (f r -> r) -> r }
+-- forall r. (f r -> r) -> Cont r a
+newtype F f a = F { runF :: forall r. (f r -> r) -> (a -> r) -> r }
 
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
-foldF alg (F m) = m return (join . alg)
+foldF alg (F m) = m (join . alg) return
 
 -- runFreer = flip foldF
 newtype Freer f a = Freer
   { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
 
 -- ReaderT alg m where
--- alg ~ (forall x. f x -> m x)
+-- alg :: (forall x. f x -> m x)
 -- alg = interpret g . interpret f
 instance Monad (Freer f) where
   return a      = Freer (\_ -> return a)
@@ -35,8 +35,8 @@ instance Monad (Freer f) where
                        -- (foldF alg m) >>= (\a -> foldF alg (f a))
 
 instance Monad (F f) where
-  return a     = F (\_return _ -> _return a)
-  F m >>= f    = F $ \_return alg -> m (\a -> runF (f a) _return alg) alg
+  return a     = F (\_alg _return -> _return a)
+  F m >>= f    = F $ \alg  _return -> m alg (\a -> runF (f a) alg _return)
 
 -----------------------------------------------------------------------------
 newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
