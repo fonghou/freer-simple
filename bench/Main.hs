@@ -12,6 +12,7 @@ import Criterion.Main (defaultMain)
 import Control.Monad.Freer
 import Control.Monad.Freer.Error (runError, throwError)
 import Control.Monad.Freer.State (get, put, runState)
+import Control.Monad.Freer.NonDet (runNonDetAll)
 
 import qualified Polysemy as Poly
 import qualified Polysemy.State as Poly
@@ -20,6 +21,9 @@ import qualified Polysemy.Error as Poly
 import qualified Control.Algebra as Eff
 import qualified Control.Carrier.State.Strict as Eff
 import qualified Control.Carrier.Error.Either as Eff
+import qualified Control.Carrier.NonDet.Church as Eff
+
+import NonDet
 
 --------------------------------------------------------------------------------
                         -- State Benchmarks --
@@ -167,6 +171,11 @@ main =
       , bench "fused.ExceptState" $ whnf countDownExcEff 10000
       , bench "freer.ExcState"  $ whnf countDownExc 10000
       , bench "polysemy.ExcState"  $ whnf countDownExcPoly 10000
+    ],
+    bgroup "NQueens" [
+        bench "[]" $ whnf (id @[_]) $ queens 8
+      , bench "fused.NonDet" $ whnf Eff.run . Eff.runNonDetA @[] $ queens 8
+      , bench "freer.NonDet" $ whnf run . runNonDetAll $ queens 8
     ],
     bgroup "HTTP Simple DSL" [
         bench "freer" $ whnf (run . runHttp) prog
