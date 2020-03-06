@@ -46,7 +46,7 @@ yield x f = send (Yield x f)
 data Status effs a b r
   = Done r
     -- ^ Coroutine is done with a result value of type @r@.
-  | Continue a (b -> Eff effs (Status effs a b r))
+  | Continue a !(b -> Eff effs (Status effs a b r))
 -- ^ Reporting a value of the type @a@, and resuming with the value of type
 -- @b@, possibly ending with a value of type @r@.
 

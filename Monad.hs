@@ -65,7 +65,7 @@ throw :: a -> Cont (Either a b) r
 throw e = Cont (\ _k -> Left e)
 
 type State s a = forall r. Cont (s -> r) a
-runState :: Cont (b -> (a, b)) a -> b -> (a, b)
+runState :: Cont (s -> (a, s)) a -> s -> (a, s)
 runState (Cont m) = m (,)
 get :: Cont (s -> s) s
 get = Cont (\k s -> k s s)
