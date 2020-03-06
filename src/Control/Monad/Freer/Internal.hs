@@ -52,9 +52,11 @@ module Control.Monad.Freer.Internal
     , Fail(..)
     ) where
 
+import Control.Applicative ( Alternative(..) )
+import Control.Monad ( MonadPlus(..) )
 import Control.Monad.Base ( MonadBase, liftBase )
-import Control.Monad.Catch (MonadThrow(..))
-import Control.Monad.Fail
+import Control.Monad.Catch ( MonadThrow(..) )
+import Control.Monad.Freer.NonDet.Type ( NonDet(..) )
 import Control.Monad.IO.Class ( MonadIO, liftIO )
 import Control.Monad.Morph ( MFunctor(..) )
 import Control.Monad.Trans.Class ( MonadTrans(..) )
@@ -134,6 +136,19 @@ newtype Fail a = Fail String
 instance (Member Fail r) => MonadFail (Eff r) where
   fail = send . Fail
   {-# INLINE fail #-}
+
+instance (Member NonDet r) => Alternative (Eff r) where
+  empty = send Empty
+  {-# INLINE empty #-}
+  m1 <|> m2 = send Choose >>= \x -> if x then m1 else m2
+  {-# INLINE (<|>) #-}
+
+
+instance (Member NonDet r) => MonadPlus (Eff r) where
+  mzero = send Empty
+  {-# INLINE mzero #-}
+  mplus = (<|>)
+  {-# INLINE mplus #-}
 
 ------------------------------------------------------------------------------
 -- | Run a natural transformation over `Freer`.

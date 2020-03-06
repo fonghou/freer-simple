@@ -27,6 +27,7 @@ spec = parallel $ describe "Error messages" $ it "should pass the doctest" $ doc
 
   -- Modules that are explicitly imported for this test must be listed here
   , "src/Control/Monad/Freer/Fail.hs"
+  , "src/Control/Monad/Freer/NonDet.hs"
   , "src/Control/Monad/Freer/Resource.hs"
   , "examples/src/Coroutine.hs"
   ]
