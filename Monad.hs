@@ -83,9 +83,9 @@ empty :: Applicative m => ListT m a
 empty = Cont (\_k -> pure ())
 
 type ContT r m a = Cont (m r) a
--- (>>=) :: Monad m => m a -> (a -> m r) -> m r
 lift :: Monad m => m a -> ContT r m a
 lift m  = Cont (m >>=)
+-- (>>=) :: Monad m => m a -> (a -> m r) -> m r
 
 type Codensity m a = forall r. Cont (m r) a
 type F' f a = Codensity (Free f) a

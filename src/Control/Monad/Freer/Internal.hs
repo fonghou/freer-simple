@@ -54,6 +54,7 @@ module Control.Monad.Freer.Internal
 
 import Control.Applicative ( Alternative(..) )
 import Control.Monad ( MonadPlus(..) )
+import Control.Monad.Fail ( MonadFail(..) )
 import Control.Monad.Base ( MonadBase, liftBase )
 import Control.Monad.Catch ( MonadThrow(..) )
 import Control.Monad.Freer.NonDet.Type ( NonDet(..) )
