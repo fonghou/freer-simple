@@ -80,9 +80,9 @@ outputToTrace show' = interpret $ \case Output o -> trace $ show' o
 
 traceEffect :: forall e r. (Members '[e, Trace] r, forall x. Show (e x))
             => Eff r ~> Eff r
-traceEffect (Freer m) = Freer $ \k -> m $ \u ->
+traceEffect (Eff m) = Eff $ \k -> m $ \u ->
   case prj @e u of
     Just e -> do
-      runFreer (trace $ show e) k
+      runEff (trace $ show e) k
       k u
     Nothing -> k u

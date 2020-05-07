@@ -8,7 +8,7 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
 -- |
--- Module:       Control.Monad.Freer.Internal
+-- Module:       Control.Monad.Eff.Internal
 -- Description:  Mechanisms to make effects work.
 -- Copyright:    (c) 2016 Allele Dev; 2017 Ixperta Solutions s.r.o.; 2017 Alexis King
 -- License:      BSD3
@@ -25,9 +25,8 @@
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Internal
     ( -- * Effect Monad
-      Freer(..)
-    , usingFreer
-    , type Eff
+      Eff(..)
+    , usingEff
       -- ** Open Union
       --
       -- | Open Union (type-indexed co-product) of effects.
@@ -59,8 +58,6 @@ import Control.Monad.Base ( MonadBase, liftBase )
 import Control.Monad.Catch ( MonadThrow(..) )
 import Control.Monad.Freer.NonDet.Type ( NonDet(..) )
 import Control.Monad.IO.Class ( MonadIO, liftIO )
-import Control.Monad.Morph ( MFunctor(..) )
-import Control.Monad.Trans.Class ( MonadTrans(..) )
 import Control.Natural ( type (~>) )
 
 import Data.Functor.Identity ( Identity(..) )
@@ -75,7 +72,7 @@ import Data.OpenUnion.Internal
 -- containing a 'Bool' would have the following type:
 --
 -- @
--- 'Eff' '['Control.Monad.Freer.Reader.Reader' 'String', 'Control.Monad.Freer.State.State' 'Bool'] 'Integer'
+-- 'Eff' '['Control.Monad.Eff.Reader.Reader' 'String', 'Control.Monad.Eff.State.State' 'Bool'] 'Integer'
 -- @
 --
 -- Normally, a concrete list of effects is not used to parameterize 'Eff'.
@@ -85,32 +82,31 @@ import Data.OpenUnion.Internal
 -- be expressed with the following type:
 --
 -- @
--- 'Members' '['Control.Monad.Freer.Reader.Reader' 'String', 'Control.Monad.Freer.State.State' 'Bool'] effs => 'Eff' effs 'Integer'
+-- 'Members' '['Control.Monad.Eff.Reader.Reader' 'String', 'Control.Monad.Eff.State.State' 'Bool'] effs => 'Eff' effs 'Integer'
 -- @
 --
 -- This abstraction allows the computation to be used in functions that may
 -- perform other effects, and it also allows the effects to be handled in any
 -- order.
-type Eff r = Freer (Union r)
 
-newtype Freer f a = Freer { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
+newtype Eff f a = Eff { runEff :: forall m. Monad m => (forall x. Union f x -> m x) -> m a }
 
-instance Functor (Freer f) where
-  fmap f (Freer m) = Freer $ \k -> f <$> m k
+instance Functor (Eff f) where
+  fmap f (Eff m) = Eff $ \k -> f <$> m k
   {-# INLINE fmap #-}
 
-instance Applicative (Freer f) where
-  pure a = Freer $ const $ pure a
+instance Applicative (Eff f) where
+  pure a = Eff $ const $ pure a
   {-# INLINE pure #-}
-  Freer f <*> Freer a = Freer $ \k -> f k <*> a k
+  Eff f <*> Eff a = Eff $ \k -> f k <*> a k
   {-# INLINE (<*>) #-}
 
-instance Monad (Freer f) where
+instance Monad (Eff f) where
   return = pure
   {-# INLINE return #-}
-  Freer ma >>= f = Freer $ \k -> do
+  Eff ma >>= f = Eff $ \k -> do
     z <- ma k
-    runFreer (f z) k
+    runEff (f z) k
   {-# INLINE (>>=) #-}
 
 instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
@@ -123,14 +119,6 @@ instance (MonadIO m, LastMember m effs) => MonadIO (Eff effs) where
 
 instance (MonadThrow m, LastMember m effs) => MonadThrow (Eff effs) where
   throwM = sendM . throwM
-
-instance MonadTrans Freer where
-  lift = liftEff
-  {-# INLINE lift #-}
-
-instance MFunctor Freer where
-  hoist = hoistEff
-  {-# INLINE hoist #-}
 
 newtype Fail a = Fail String
 
@@ -152,19 +140,19 @@ instance (Member NonDet r) => MonadPlus (Eff r) where
   {-# INLINE mplus #-}
 
 ------------------------------------------------------------------------------
--- | Run a natural transformation over `Freer`.
-hoistEff :: (f ~> g) -> Freer f ~> Freer g
-hoistEff nat (Freer m) = Freer $ \k -> m $ k . nat
+-- | Run a natural transformation over `Eff`.
+hoistEff :: (Union f ~> Union g) -> Eff f ~> Eff g
+hoistEff nat (Eff m) = Eff $ \k -> m $ k . nat
 {-# INLINE hoistEff #-}
 
--- | Lift a value into 'Freer'. When 'f' is 'Union', this specializes as
+-- | Lift a value into 'Eff'. When 'f' is 'Union', this specializes as
 -- @Union -- r x -> Eff r x@
-liftEff :: f x -> Freer f x
-liftEff u = Freer $ \k -> k u
+liftEff :: Union f x -> Eff f x
+liftEff u = Eff $ \k -> k u
 {-# INLINE liftEff #-}
 
 -- | “Sends” an effect, which should be a value defined as part of an effect
--- algebra (see the module documentation for "Control.Monad.Freer"), to an
+-- algebra (see the module documentation for "Control.Monad.Eff"), to an
 -- effectful computation. This is used to connect the definition of an effect to
 -- the 'Eff' monad so that it can be used and handled.
 send :: Member eff effs => eff a -> Eff effs a
@@ -205,13 +193,13 @@ run = runIdentity . runM
 -- monad, which is useful in conjunction with 'sendM' or 'liftBase' for plugging
 -- in traditional transformer stacks.
 runM :: Monad m => Eff '[m] a -> m a
-runM = usingFreer extract
+runM = usingEff extract
 {-# INLINE runM #-}
 
--- | @'flip' 'runFreer'@
-usingFreer :: Monad m => (forall x. f x -> m x) -> Freer f a -> m a
-usingFreer k m = runFreer m k
-{-# INLINE usingFreer #-}
+-- | @'flip' 'runEff'@
+usingEff :: Monad m => (forall x. Union f x -> m x) -> Eff f a -> m a
+usingEff k m = runEff m k
+{-# INLINE usingEff #-}
 
 -- | Embeds a less-constrained 'Eff' into a more-constrained one. Analogous to
 -- MTL's 'lift'.

@@ -44,10 +44,10 @@ data Resource r a where
 type Bracketed r = Eff (Resource r ': r)
 
 liftBracket :: forall r r'. (Eff r ~> Eff r') -> Bracketed r ~> Bracketed r'
-liftBracket f (Freer m) = Freer $ \k -> m $ \u -> case decomp u of
-  Left x -> usingFreer k $ raise $ f $ liftEff x
+liftBracket f (Eff m) = Eff $ \k -> m $ \u -> case decomp u of
+  Left x -> usingEff k $ raise $ f $ liftEff x
   Right (Bracket z alloc dealloc doit) ->
-    usingFreer k $ send $ Bracket (f . z) alloc dealloc doit
+    usingEff k $ send $ Bracket (f . z) alloc dealloc doit
 {-# INLINE liftBracket #-}
 
 raiseLast :: forall m r. Eff r ~> Eff (r :++: '[m])
@@ -63,7 +63,7 @@ getLength = fromInteger $ natVal $ Proxy @(Length r)
 {-# INLINE getLength #-}
 
 runBracket :: Bracketed '[IO] ~> IO
-runBracket (Freer m) = runResourceT $ m $ \u -> case decomp u of
+runBracket (Eff m) = runResourceT $ m $ \u -> case decomp u of
   Left x -> liftIO $ extract x
   Right (Bracket z (alloc :: Eff r' a) dealloc doit) -> do
     let z' :: Eff (r' :++: '[ResourceT IO]) ~> Eff '[ResourceT IO]

@@ -20,10 +20,10 @@ import           Control.Monad.Freer.Internal
 ------------------------------------------------------------------------------
 -- | Interpret an effect as a monadic action in 'Eff r'.
 interpret :: (eff ~> Eff r) -> Eff (eff ': r) ~> Eff r
-interpret f (Freer m) = Freer $ \k -> m $ \u ->
+interpret f (Eff m) = Eff $ \k -> m $ \u ->
   case decomp u of
     Left x -> k x
-    Right y -> runFreer (f y) k
+    Right y -> runEff (f y) k
 {-# INLINE interpret #-}
 
 
@@ -45,7 +45,7 @@ reinterpret2 f  = interpret f . raiseUnder2
 
 reinterpret3
   :: forall f g1 g2 g3 r
-  . (f ~> Eff (g1 ': g2 ': g3 ': r)) 
+  . (f ~> Eff (g1 ': g2 ': g3 ': r))
   -> Eff (f : r) ~> Eff (g1 ': g2 ': g3 ': r)
 reinterpret3 f = interpret f . raiseUnder3
 {-# INLINE[3] reinterpret3 #-}
@@ -64,11 +64,11 @@ stateful
   :: (eff ~> S.StateT s (Eff r))
   -> s
   -> Eff (eff ': r) a -> Eff r (s, a)
-stateful f s (Freer m) = Freer $ \k ->
+stateful f s (Eff m) = Eff $ \k ->
   fmap swap $ flip S.runStateT s $ m $ \u ->
     case decomp u of
       Left  x -> lift $ k x
-      Right y -> hoist (usingFreer k) $ f y
+      Right y -> hoist (usingEff k) $ f y
 {-# INLINE[3] stateful #-}
 -- NB: @stateful f s = transform (flip S.runStateT s) f@, but is not
 -- implemented as such, since 'transform' is available only >= 8.6.0
@@ -80,10 +80,10 @@ shortCircuit
   :: (eff ~> E.ExceptT e (Eff r))
   -> Eff (eff ': r) a
   -> Eff r (Either e a)
-shortCircuit f (Freer m) = Freer $ \k -> E.runExceptT $ m $ \u ->
+shortCircuit f (Eff m) = Eff $ \k -> E.runExceptT $ m $ \u ->
   case decomp u of
     Left  x -> lift $ k x
-    Right y -> hoist (usingFreer k) $ f y
+    Right y -> hoist (usingEff k) $ f y
 {-# INLINE shortCircuit #-}
 -- NB: @shortCircuit = transform E.runExceptT@, but is not implemented as such,
 -- since 'transform' is available only >= 8.6.0
@@ -105,10 +105,10 @@ transform
   -> (eff ~> t (Eff r))
   -> Eff (eff ': r) a
   -> Eff r b
-transform hoist' lower f (Freer m) = Freer $ \k -> lower $ m $ \u ->
+transform hoist' lower f (Eff m) = Eff $ \k -> lower $ m $ \u ->
   case decomp u of
     Left  x -> lift $ k x
-    Right y -> hoist' (usingFreer k) $ f y
+    Right y -> hoist' (usingEff k) $ f y
 {-# INLINE[3] transform #-}
 #endif
 
@@ -120,10 +120,10 @@ interpose
   :: Member eff r
   => (eff ~> Eff r)
   -> Eff r ~> Eff r
-interpose f (Freer m) = Freer $ \k -> m $ \u ->
+interpose f (Eff m) = Eff $ \k -> m $ \u ->
   case prj u of
     Nothing -> k u
-    Just e  -> runFreer (f e) k
+    Just e  -> runEff (f e) k
 {-# INLINE interpose #-}
 
 
@@ -134,8 +134,8 @@ interposeState
   => (eff ~> S.StateT s (Eff r))
   -> s
   -> Eff r a -> Eff r (s, a)
-interposeState f s (Freer m) = fmap swap $ Freer $ \k ->
-  usingFreer k $ flip S.runStateT s $ m $ \u ->
+interposeState f s (Eff m) = fmap swap $ Eff $ \k ->
+  usingEff k $ flip S.runStateT s $ m $ \u ->
     case prj u of
       Nothing -> lift $ liftEff u
       Just e  -> f e
@@ -154,8 +154,8 @@ relay
   -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
   -> Eff (eff ': r) a
   -> Eff r b
-relay pure' bind' (Freer m) = Freer $ \k ->
-  usingFreer k $ flip runContT pure' $ m $ \u ->
+relay pure' bind' (Eff m) = Eff $ \k ->
+  usingEff k $ flip runContT pure' $ m $ \u ->
     case decomp u of
       Left  x -> lift $ liftEff x
       Right y -> ContT $ bind' y
@@ -170,8 +170,8 @@ interposeRelay
   -> (forall x. eff x -> (x -> Eff r b) -> Eff r b)
   -> Eff r a
   -> Eff r b
-interposeRelay pure' bind' (Freer m) = Freer $ \k ->
-  usingFreer k $ flip runContT pure' $ m $ \u ->
+interposeRelay pure' bind' (Eff m) = Eff $ \k ->
+  usingEff k $ flip runContT pure' $ m $ \u ->
     case prj u of
       Nothing -> lift $ liftEff u
       Just y  -> ContT $ bind' y
@@ -210,7 +210,7 @@ naturally
   => (Union r ~> Union r')
   -> (eff ~> eff')
   -> Eff (eff ': r) ~> Eff r'
-naturally z f (Freer m) = Freer $ \k -> m $ \u ->
+naturally z f (Eff m) = Eff $ \k -> m $ \u ->
   case decomp u of
     Left x  -> k $ z x
     Right y -> k . inj $ f y
