@@ -26,11 +26,11 @@ module Control.Monad.Freer.Error
     , panic
     ) where
 
-import Control.Exception (Exception(..), SomeException, throw)
+import Control.Exception (Exception(..), SomeException, throw, throwIO)
 import Control.Monad
+import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
-import Control.Monad.Catch (MonadThrow(..))
 import qualified Control.Monad.Trans.Except as E
 
 import Data.Typeable
@@ -131,11 +131,11 @@ instance (Typeable e) => Exception (ErrorException e)
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
 errorException :: forall e m effs a.
-               (Typeable e, LastMember m effs, MonadThrow m)
+               (Typeable e, LastMember m effs, MonadIO m)
                => Eff (Error e ': effs) a
                -> Eff effs a
 errorException = subsume @m $ \case
-  (Error e) -> throwM $ ErrorException e
+  (Error e) -> liftIO $ throwIO $ ErrorException e
 
 {-# INLINE errorException #-}
 

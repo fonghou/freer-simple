@@ -14,10 +14,10 @@ spec = do
   describe "bracket_" $ do
     it "runs a cleanup action on error (IORef)" $ do
       outputs <- newIORef []
-      (result :: Either (ErrorExc ErrorCall) ()) <-
+      (result :: Either (ErrorException ErrorCall) ()) <-
         try
           . runResource
-            ( errorToExc @ErrorCall
+            ( errorException @ErrorCall
                 . runOutputMonoidIORef @[String] outputs id
                 . runInputConst "error"
             )
@@ -27,14 +27,14 @@ spec = do
             msg <- input @String
             throwError $ ErrorCall msg
       readIORef outputs `shouldReturn` ["setup", "use", "teardown"]
-      result `shouldBe` Left (ErrorExc $ ErrorCall "error")
+      result `shouldBe` Left (ErrorException $ ErrorCall "error")
 
     it "runs a cleanup action on success (TVar)" $ do
       outputs <- newTVarIO []
-      (result :: Either (ErrorExc ErrorCall) ()) <-
+      (result :: Either (ErrorException ErrorCall) ()) <-
         try
           . runResource
-            ( errorToExc @ErrorCall
+            ( errorException @ErrorCall
                 . runOutputMonoidTVar @[String] outputs id
             )
           $ bracket_ (output ["setup"]) (output ["teardown"])
