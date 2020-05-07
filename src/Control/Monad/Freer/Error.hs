@@ -13,7 +13,7 @@
 -- Using <http://okmij.org/ftp/Haskell/extensible/Eff1.hs> as a starting point.
 module Control.Monad.Freer.Error
     ( Error(..)
-    , ErrorExc(..)
+    , ErrorException(..)
     , throwError
     , catchError
     , catchJust
@@ -22,10 +22,11 @@ module Control.Monad.Freer.Error
     , liftEitherM
     , mapError
     , runError
-    , errorToExc
+    , errorException
+    , panic
     ) where
 
-import qualified Control.Exception as X
+import Control.Exception (Exception(..), SomeException, throw)
 import Control.Monad
 import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
@@ -33,6 +34,8 @@ import Control.Monad.Catch (MonadThrow(..))
 import qualified Control.Monad.Trans.Except as E
 
 import Data.Typeable
+
+import GHC.Stack (HasCallStack, CallStack, callStack, prettyCallStack)
 
 -- | Exceptions of the type @e :: *@ with no resumption.
 newtype Error e r where
@@ -114,23 +117,38 @@ catchJust f m k = catchError m $ \ e -> case f e of
 
 {-# INLINE catchJust #-}
 
-newtype ErrorExc e = ErrorExc e
+newtype ErrorException e = ErrorException e
   deriving ( Typeable, Eq )
 
-instance Typeable e => Show (ErrorExc e) where
-  show = mappend "Control.Monad.Freer.ErrorExc: " . show . typeRep
+instance Typeable e => Show (ErrorException e) where
+  show = mappend "Control.Monad.Freer.ErrorException: " . show . typeRep
 
-instance (Typeable e) => X.Exception (ErrorExc e)
+instance (Typeable e) => Exception (ErrorException e)
 
 -- | Throw an 'Error' as 'Control.Monad.Catch.MonadThrow' Exception through final monad.
 --
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-errorToExc :: forall e m effs a.
-           (Typeable e, LastMember m effs, MonadThrow m)
-           => Eff (Error e ': effs) a
-           -> Eff effs a
-errorToExc = subsume @m $ \case (Error e) -> throwM $ ErrorExc e
+errorException :: forall e m effs a.
+               (Typeable e, LastMember m effs, MonadThrow m)
+               => Eff (Error e ': effs) a
+               -> Eff effs a
+errorException = subsume @m $ \case
+  (Error e) -> throwM $ ErrorException e
 
-{-# INLINE errorToExc #-}
+{-# INLINE errorException #-}
+
+data FatalError = FatalError SomeException CallStack
+  deriving (Show)
+
+instance Exception FatalError where
+  displayException (FatalError e stack) =
+    displayException e ++ "\n" ++ prettyCallStack stack
+
+panic :: forall e effs a.
+      (Exception e, HasCallStack )
+      => Eff (Error e ': effs) a
+      -> Eff effs a
+panic = interpret $ \case
+  (Error e) -> throw $ FatalError (toException e) callStack
