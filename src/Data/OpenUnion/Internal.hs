@@ -1,3 +1,4 @@
+{-# LANGUAGE StarIsType #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -26,24 +27,25 @@
 -- Based on
 -- <http://okmij.org/ftp/Haskell/extensible/OpenUnion51.hs OpenUnion51.hs>.
 --
--- Type-list @r :: [* -> *]@ of open union components is a small Universe.
+-- Type-list @r :: [Type -> Type]@ of open union components is a small Universe.
 -- Therefore, we can use a @Typeable@-like evidence in that universe. In our
 -- case a simple index of an element in the type-list is sufficient
 -- substitution for @Typeable@.
 module Data.OpenUnion.Internal where
 
+import Data.Kind (Type)
 import GHC.TypeLits ( ErrorMessage(..), TypeError )
 
 import Unsafe.Coerce ( unsafeCoerce )
 
 -- | Open union is a strong sum (existential with an evidence).
-data Union (r :: [* -> *]) a where
+data Union (r :: [Type -> Type]) a where
   Union :: {-# UNPACK #-} !Word -> t a -> Union r a
 
--- | Takes a request of type @t :: * -> *@, and injects it into the 'Union'.
+-- | Takes a request of type @t :: Type -> Type@, and injects it into the 'Union'.
 --
 -- Summand is assigning a specified 'Word' value, which is a position in the
--- type-list @(t ': r) :: * -> *@.
+-- type-list @(t ': r) :: Type -> Type@.
 --
 -- __This function is unsafe.__
 --
@@ -53,9 +55,9 @@ unsafeInj = Union
 
 {-# INLINE unsafeInj #-}
 
--- | Project a value of type @'Union' (t ': r) :: * -> *@ into a possible
--- summand of the type @t :: * -> *@. 'Nothing' means that @t :: * -> *@ is not
--- the value stored in the @'Union' (t ': r) :: * -> *@.
+-- | Project a value of type @'Union' (t ': r) :: Type -> Type@ into a possible
+-- summand of the type @t :: Type -> Type@. 'Nothing' means that @t :: Type -> Type@ is not
+-- the value stored in the @'Union' (t ': r) :: Type -> Type@.
 --
 -- It is assumed that summand is stored in the 'Union' when the 'Word' value is
 -- the same value as is stored in the 'Union'.
@@ -70,17 +72,17 @@ unsafePrj n (Union n' x)
 
 {-# INLINE unsafePrj #-}
 
--- | Represents position of element @t :: * -> *@ in a type list
--- @r :: [* -> *]@.
+-- | Represents position of element @t :: Type -> Type@ in a type list
+-- @r :: [Type -> Type]@.
 newtype P t r = P { unP :: Word }
 
--- | Find an index of an element @t :: * -> *@ in a type list @r :: [* -> *]@.
--- The element must exist. The @w :: [* -> *]@ type represents the entire list,
+-- | Find an index of an element @t :: Type -> Type@ in a type list @r :: [Type -> Type]@.
+-- The element must exist. The @w :: [Type -> Type]@ type represents the entire list,
 -- prior to recursion, and it is used to produce better type errors.
 --
 -- This is essentially a compile-time computation without run-time overhead.
-class FindElem (t :: * -> *) (r :: [* -> *]) where
-  -- | Position of the element @t :: * -> *@ in a type list @r :: [* -> *]@.
+class FindElem (t :: Type -> Type) (r :: [Type -> Type]) where
+  -- | Position of the element @t :: Type -> Type@ in a type list @r :: [Type -> Type]@.
   --
   -- Position is computed during compilation, i.e. there is no run-time
   -- overhead.
@@ -98,8 +100,8 @@ instance {-# OVERLAPPABLE #-}FindElem t r => FindElem t (t' ': r) where
   elemNo = P $ 1 + unP (elemNo :: P t r)
 
 -- | Instance resolution for this class fails with a custom type error
--- if @t :: * -> *@ is not in the list @r :: [* -> *]@.
-class IfNotFound (t :: * -> *) (r :: [* -> *]) (w :: [* -> *])
+-- if @t :: Type -> Type@ is not in the list @r :: [Type -> Type]@.
+class IfNotFound (t :: Type -> Type) (r :: [Type -> Type]) (w :: [Type -> Type])
 
 -- | If we reach an empty list, that’s a failure, since it means the type isn’t
 -- in the list. For GHC >=8, we can render a custom type error that explicitly
@@ -132,13 +134,13 @@ instance {-# INCOHERENT #-}IfNotFound t r w
 -- @
 -- 'Member' ('Control.Monad.Freer.State.State' 'Integer') effs => 'Control.Monad.Freer.Eff' effs ()
 -- @
-class FindElem eff effs => Member (eff :: * -> *) effs where
+class FindElem eff effs => Member (eff :: Type -> Type) effs where
   -- This type class is used for two following purposes:
   --
-  -- * As a @Constraint@ it guarantees that @t :: * -> *@ is a member of a
-  --   type-list @r :: [* -> *]@.
+  -- Type As a @Constraint@ it guarantees that @t :: Type -> Type@ is a member of a
+  --   type-list @r :: [Type -> Type]@.
   --
-  -- * Provides a way how to inject\/project @t :: * -> *@ into\/from a 'Union',
+  -- Type Provides a way how to inject\/project @t :: Type -> Type@ into\/from a 'Union',
   --   respectively.
   --
   -- Following law has to hold:
@@ -146,15 +148,15 @@ class FindElem eff effs => Member (eff :: * -> *) effs where
   -- @
   -- 'prj' . 'inj' === 'Just'
   -- @
-  -- | Takes a request of type @t :: * -> *@, and injects it into the
+  -- | Takes a request of type @t :: Type -> Type@, and injects it into the
   -- 'Union'.
   --
   -- /O(1)/
   inj :: eff a -> Union effs a
 
-  -- | Project a value of type @'Union' (t ': r) :: * -> *@ into a possible
-  -- summand of the type @t :: * -> *@. 'Nothing' means that @t :: * -> *@ is
-  -- not the value stored in the @'Union' (t ': r) :: * -> *@.
+  -- | Project a value of type @'Union' (t ': r) :: Type -> Type@ into a possible
+  -- summand of the type @t :: Type -> Type@. 'Nothing' means that @t :: Type -> Type@ is
+  -- not the value stored in the @'Union' (t ': r) :: Type -> Type@.
   --
   -- /O(1)/
   prj :: Union effs a -> Maybe (eff a)
@@ -167,10 +169,10 @@ instance (FindElem t r, IfNotFound t r r) => Member t r where
 
   {-# INLINE prj #-}
 
--- | Orthogonal decomposition of a @'Union' (t ': r) :: * -> *@. 'Right' value
--- is returned if the @'Union' (t ': r) :: * -> *@ contains @t :: * -> *@, and
+-- | Orthogonal decomposition of a @'Union' (t ': r) :: Type -> Type@. 'Right' value
+-- is returned if the @'Union' (t ': r) :: Type -> Type@ contains @t :: Type -> Type@, and
 -- 'Left' when it doesn't. Notice that 'Left' value contains
--- @Union r :: * -> *@, i.e. it can not contain @t :: * -> *@.
+-- @Union r :: Type -> Type@, i.e. it can not contain @t :: Type -> Type@.
 --
 -- /O(1)/
 decomp :: Union (t ': r) a -> Either (Union r a) (t a)
@@ -180,7 +182,7 @@ decomp (Union n a) = Left $ Union (n - 1) a
 {-# INLINE decomp #-}
 
 -- | Specialised version of 'prj'\/'decomp' that works on an
--- @'Union' '[t] :: * -> *@ which contains only one specific summand. Hence the
+-- @'Union' '[t] :: Type -> Type@ which contains only one specific summand. Hence the
 -- absence of 'Maybe', and 'Either'.
 --
 -- /O(1)/

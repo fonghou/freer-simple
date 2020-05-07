@@ -27,7 +27,7 @@ import Control.Monad.Freer.Interpretation
 import Control.Monad.Freer.Output
 import Control.Monad.Trans.State.Strict ( modify' )
 
-import Data.Monoid ( (<>) )
+import Data.Monoid ()
 
 -- | Writer effects - send outputs to an effect environment.
 data Writer w r where

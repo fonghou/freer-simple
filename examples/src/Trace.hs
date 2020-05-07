@@ -2,13 +2,6 @@
 
 module Trace (module Trace) where
 
-import Control.Applicative ((<$>), (<*>), pure)
-import Data.Function (($))
-import Data.Int (Int)
-import Data.Monoid ((<>))
-import System.IO (IO)
-import Text.Show (Show(show))
-
 import Control.Monad.Freer (Eff, Member, runM)
 import Control.Monad.Freer.Reader (ask, runReader)
 import Control.Monad.Freer.Trace
