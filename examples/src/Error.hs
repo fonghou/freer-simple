@@ -2,7 +2,7 @@
 
 module Error where
 
-import Control.Exception as X
+import Control.Exception
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Input
@@ -16,8 +16,9 @@ newtype FooErr = FooErr String deriving (Show)
 
 instance Exception FooErr
 
-test1
-  :: (Members [Input String, Output String, Error FooErr, Trace] m) => Eff m ()
+test1 ::
+  (Members [Input String, Output String, Error FooErr, Trace] m) =>
+  Eff m ()
 test1 = do
   trace "debug"
   i <- input @String
@@ -30,14 +31,15 @@ run1 :: HasCallStack => IO ()
 run1 =
   test1
     & runInputConst @String "world"
-    & panic @FooErr
+    -- & panic @FooErr
+    & errorThrow @FooErr
     & outputToTrace id
     & runTrace
     & runM
 
-run1' :: HasCallStack => IO ()
-run1' = catch run1 $ \(ErrorException (e :: String)) -> do
-  print e
+run1' :: IO ()
+run1' = catch run1 $ \(ErrorException e) -> do
+  print (e :: FooErr)
 
 test2 :: (Members [Input String, Output String, Trace] m) => Eff m ()
 test2 = handleError @FooErr test1 $ \e -> output $ show e
@@ -49,7 +51,6 @@ run2 =
     & runError @FooErr
     & runOutputList @String
     & runTrace
-    & errorException @String
     & runM
 
 test3 :: Members '[State String, Error FooErr] r => Eff r String
@@ -66,12 +67,12 @@ test3 = do
         get
   catchError @FooErr throwing (\e -> catching >> throwError e)
 
-runThrowM :: Either SomeException (String, String)
-runThrowM =
+runPanic :: (String, String)
+runPanic =
   test3
     & runState "Error before State"
     & panic @FooErr
-    & runM
+    & run
 
 runError' :: Either FooErr (String, String)
 runError' =

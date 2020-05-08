@@ -17,7 +17,7 @@ spec = do
       (result :: Either (ErrorException ErrorCall) ()) <-
         try
           . runResource
-            ( errorException @ErrorCall
+            ( errorThrow @ErrorCall
                 . runOutputMonoidIORef @[String] outputs id
                 . runInputConst "error"
             )
@@ -34,7 +34,7 @@ spec = do
       (result :: Either (ErrorException ErrorCall) ()) <-
         try
           . runResource
-            ( errorException @ErrorCall
+            ( errorThrow @ErrorCall
                 . runOutputMonoidTVar @[String] outputs id
             )
           $ bracket_ (output ["setup"]) (output ["teardown"])

@@ -22,13 +22,13 @@ module Control.Monad.Freer.Error
     , liftEitherM
     , mapError
     , runError
-    , errorException
+    , errorThrow
     , panic
     ) where
 
 import Control.Exception (Exception(..), SomeException, throw, throwIO)
 import Control.Monad
-import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Freer
 import Control.Monad.Freer.Interpretation
 import qualified Control.Monad.Trans.Except as E
@@ -125,19 +125,19 @@ instance Typeable e => Show (ErrorException e) where
 
 instance (Typeable e) => Exception (ErrorException e)
 
--- | Throw an 'Error' as 'Control.Monad.Catch.MonadThrow' Exception through final monad.
+-- | Throw an 'Error' as 'Control.Exception' Exception through final monad.
 --
 -- /Beware/: Effects that aren't interpreted in terms of 'IO'
 -- will have local state semantics in regards to 'Error' effects
 -- interpreted this way.
-errorException :: forall e m effs a.
+errorThrow :: forall e m effs a.
                (Typeable e, LastMember m effs, MonadIO m)
                => Eff (Error e ': effs) a
                -> Eff effs a
-errorException = subsume @m $ \case
+errorThrow = subsume @m $ \case
   (Error e) -> liftIO $ throwIO $ ErrorException e
 
-{-# INLINE errorException #-}
+{-# INLINE errorThrow #-}
 
 data FatalError = FatalError SomeException CallStack
   deriving (Show)
