@@ -53,7 +53,7 @@ module Control.Monad.Freer.Internal
 
 import Control.Applicative ( Alternative(..) )
 import Control.Monad ( MonadPlus(..) )
-import Control.Monad.Fail ()
+import Control.Monad.Fail (MonadFail(..))
 import Control.Monad.Base ( MonadBase, liftBase )
 import Control.Monad.Catch ( MonadThrow(..) )
 import Control.Monad.Freer.NonDet.Type ( NonDet(..) )
@@ -131,7 +131,6 @@ instance (Member NonDet r) => Alternative (Eff r) where
   {-# INLINE empty #-}
   m1 <|> m2 = send Choose >>= \x -> if x then m1 else m2
   {-# INLINE (<|>) #-}
-
 
 instance (Member NonDet r) => MonadPlus (Eff r) where
   mzero = send Empty

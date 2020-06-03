@@ -1,4 +1,3 @@
-{-# LANGUAGE StarIsType #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
