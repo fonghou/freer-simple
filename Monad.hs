@@ -12,7 +12,7 @@ instance Functor f => Monad (Free f) where
                     -- slow!
 
 foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
-foldFree _ (Pure a)  = return a
+foldFree _   (Pure a)  = return a
 foldFree alg (Join as) = alg as >>= foldFree alg
 
 -----------------------------------------------------------------------------
@@ -30,19 +30,33 @@ newtype Freer f a = Freer
 -- alg :: (forall x. f x -> m x)
 -- alg = interpret g . interpret f
 instance Monad (Freer f) where
-  return a      = Freer (\_ -> return a)
+  return a      = Freer $ \_   -> return a
   Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
                        -- (foldF alg m) >>= (\a -> foldF alg (f a))
 
 instance Monad (F f) where
-  return a     = F (\_alg _return -> _return a)
-  F m >>= f    = F $ \alg  _return -> m alg (\a -> runF (f a) alg _return)
+  return a     = F $ \_   _return -> _return a
+  F m >>= f    = F $ \alg _return -> m alg (\a -> runF (f a) alg _return)
+
+-----------------------------------------------------------------------------
+data Eff f a where
+  Return :: a -> Eff f a
+  Then   :: f a -> (a -> Eff f b) -> Eff f b
+
+data State' s a where
+  Get :: State' s s
+  Put :: s -> State' s ()
+
+runState' :: s -> Eff (State' s) a -> (s, a)
+runState' s (Return x) = (s, x)
+runState' s (Get   `Then` k) = runState' s (k s)
+runState' _ (Put s `Then` k) = runState' s (k ())
 
 -----------------------------------------------------------------------------
 newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
 
 instance Monad (Cont r) where
-  return a     = Cont (\_return -> _return a)
+  return a     = Cont $ \_return -> _return a
   Cont m >>= f = Cont $ \_return -> m $ \a -> f a >>- _return
 
 runC :: Cont r r -> r
@@ -85,7 +99,6 @@ empty = Cont (\_k -> pure ())
 type ContT r m a = Cont (m r) a
 lift :: Monad m => m a -> ContT r m a
 lift m  = Cont (m >>=)
--- (>>=) :: Monad m => m a -> (a -> m r) -> m r
 
 type Codensity m a = forall r. Cont (m r) a
 type F' f a = Codensity (Free f) a
