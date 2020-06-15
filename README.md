@@ -1,10 +1,10 @@
 ## This is a fork of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) using [**polysemy**](https://github.com/polysemy-research/polysemy) freer monad encoding (but NO high-order effect stuff, which is very slow). Hence the branch name freer-simple-faster.
 
 Run ```stack bench``` to see CountDown benchmarks
-  - mtl and fused-effect are fast only with inlining
-  - mtl and fused-effect are 70x slower with no inlining
-  - freer-simple-faster is only about 2x slower than inline mtl/fused-effect
-  - freer-simple-faster performance is *consistent with or without inline*
+  - mtl and fused-effect are fast only with inline
+  - mtl and fused-effect become 70x slower when no inlining
+  - freer-simple-faster is 2x slower than inlined mtl, but 40x faster than no-inlined mtl.
+  - This is the best part: freer-simple-faster performance is *consistent with or without inline*
   - polysemy is more than 100x slower than freer-simple-faster
 
 
