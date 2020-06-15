@@ -1,4 +1,12 @@
-## Note: This is a fork of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) backporting most of first order polysemy effects, but retain the MTL-order performance of [**polysemy**](https://github.com/polysemy-research/polysemy) non-higher-order freer encoding (see [**discussion**](https://github.com/polysemy-research/polysemy/issues/229)).  Hence the branch name freer-simple-faster.
+## This is a fork of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) using [**polysemy**](https://github.com/polysemy-research/polysemy) freer monad encoding (but NO high-order effect stuff, which is very slow). Hence the branch name freer-simple-faster.
+
+Run ```stack bench``` to see CountDown benchmarks
+  - mtl and fused-effect are fast only with inlining
+  - mtl and fused-effect are 70x slower with no inlining
+  - freer-simple-faster is only about 2x slower than inline mtl/fused-effect
+  - freer-simple-faster performance is *consistent with or without inline*
+  - polysemy is more than 100x slower than freer-simple-faster
+
 
 # freer-simple — a friendly effect system for Haskell [![Build Status](https://travis-ci.org/lexi-lambda/freer-simple.svg?branch=master)](https://travis-ci.org/lexi-lambda/freer-simple)
 

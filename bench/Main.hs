@@ -2,17 +2,13 @@ module Main (main) where
 
 import Control.Monad (replicateM_)
 
-import qualified Control.Monad.Except as MTL
+import Control.Monad.Freer
+import Control.Monad.Freer.Error (runError)
+import Control.Monad.Freer.State (get, runState)
+import Control.Monad.Freer.NonDet (runNonDetAll)
+
 import qualified Control.Monad.State as MTL
 import qualified Control.Monad.Free as Free
-
-import Criterion (bench, bgroup, whnf)
-import Criterion.Main (defaultMain)
-
-import Control.Monad.Freer
-import Control.Monad.Freer.Error (runError, throwError)
-import Control.Monad.Freer.State (get, put, runState)
-import Control.Monad.Freer.NonDet (runNonDetAll)
 
 import qualified Polysemy as Poly
 import qualified Polysemy.State as Poly
@@ -24,6 +20,10 @@ import qualified Control.Carrier.Error.Either as Eff
 import qualified Control.Carrier.NonDet.Church as Eff
 
 import NonDet
+import qualified CountDown
+
+import Criterion (bench, bgroup, whnf)
+import Criterion.Main (defaultMain)
 
 --------------------------------------------------------------------------------
                         -- State Benchmarks --
@@ -43,39 +43,33 @@ countDown :: Int -> (Int, Int)
 countDown n = if n <= 0 then (n, n) else countDown (n - 1)
 
 countDownFreer :: Int -> (Int, Int)
-countDownFreer start = run (runState start go)
-  where go = get >>= (\n -> if n <= 0 then pure n else put (n-1) >> go)
+countDownFreer start = run (runState start CountDown.freer)
 
 countDownPoly :: Int -> (Int, Int)
 countDownPoly start = Poly.run (Poly.runState start go)
   where go = Poly.get >>= (\n -> if n <= 0 then pure n else Poly.put (n-1) >> go)
 
 countDownMTL :: Int -> (Int, Int)
-countDownMTL = MTL.runState go
-  where go = MTL.get >>= (\n -> if n <= 0 then pure n else MTL.put (n-1) >> go)
+countDownMTL = MTL.runState CountDown.mtl
 
 countDownEff :: Int -> (Int, Int)
-countDownEff start = Eff.run (Eff.runState start go)
-  where go = Eff.get >>= (\n -> if n <= 0 then pure n else Eff.put (n-1) >> go)
+countDownEff start = Eff.run (Eff.runState start CountDown.fused)
 
 --------------------------------------------------------------------------------
                        -- Exception + State --
 --------------------------------------------------------------------------------
 countDownExc :: Int -> Either String (Int,Int)
-countDownExc start = run $ runError (runState start go)
-  where go = get >>= (\n -> if n <= (0 :: Int) then throwError "wat" else put (n-1) >> go)
+countDownExc start = run $ runError (runState start CountDown.freer2)
 
 countDownExcPoly :: Int -> Either String (Int,Int)
 countDownExcPoly start = Poly.run $ Poly.runError (Poly.runState start go)
   where go = Poly.get >>= (\n -> if n <= (0 :: Int) then Poly.throw "wat" else Poly.put (n-1) >> go)
 
 countDownExcMTL :: Int -> Either String (Int,Int)
-countDownExcMTL = MTL.runStateT go
-  where go = MTL.get >>= (\n -> if n <= (0 :: Int) then MTL.throwError "wat" else MTL.put (n-1) >> go)
+countDownExcMTL = MTL.runStateT CountDown.mtl2
 
 countDownExcEff :: Int -> Either String (Int,Int)
-countDownExcEff start = Eff.run $ Eff.runError (Eff.runState start go)
-  where go = Eff.get >>= (\n -> if n <= (0 :: Int) then Eff.throwError "wat" else Eff.put (n-1) >> go)
+countDownExcEff start = Eff.run $ Eff.runError (Eff.runState start CountDown.fused2)
 
 --------------------------------------------------------------------------------
                           -- Freer: Interpreter --
@@ -161,14 +155,14 @@ main =
     ],
     bgroup "Countdown Bench" [
         bench "reference"      $ whnf countDown 10000
-      , bench "mtl.State"      $ whnf countDownMTL 10000
-      , bench "fused.State"      $ whnf countDownEff 10000
+      , bench "mtl.State (inline)"      $ whnf countDownMTL 10000
+      , bench "fused.State (inline)"      $ whnf countDownEff 10000
       , bench "freer.State"    $ whnf countDownFreer 10000
       , bench "polysemy.State"    $ whnf countDownPoly 10000
     ],
     bgroup "Countdown+Except Bench" [
-        bench "mtl.ExceptState" $ whnf countDownExcMTL 10000
-      , bench "fused.ExceptState" $ whnf countDownExcEff 10000
+        bench "mtl.ExceptState (no inline)" $ whnf countDownExcMTL 10000
+      , bench "fused.ExceptState (no inline)" $ whnf countDownExcEff 10000
       , bench "freer.ExcState"  $ whnf countDownExc 10000
       , bench "polysemy.ExcState"  $ whnf countDownExcPoly 10000
     ],
