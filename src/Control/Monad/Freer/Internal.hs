@@ -47,7 +47,6 @@ module Control.Monad.Freer.Internal
       -- * Handling Effects
     , run
     , runM
-    , runIO
       -- * MonadFail
     , Fail(..)
     ) where
@@ -195,11 +194,7 @@ run = runIdentity . runM
 runM :: Monad m => Eff '[m] a -> m a
 runM = usingEff extract
 {-# INLINE runM #-}
-
--- | Specialized 'runM' '@IO'
-runIO :: Eff '[IO] a -> IO a
-runIO = runM
-{-# INLINE runIO #-}
+{-# SPECIALIZE runM :: Eff '[IO] a -> IO a #-}
 
 -- | @'flip' 'runEff'@
 usingEff :: Monad m => (forall x. Union f x -> m x) -> Eff f a -> m a
