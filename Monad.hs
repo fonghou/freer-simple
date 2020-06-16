@@ -124,6 +124,7 @@ instance Functor (Freer f) where
 instance Applicative (F f) where
   pure = return
   mf <*> ma = do { f <- mf; a <- ma; return (f a) }
+
 instance Functor f => Functor (Free f)
  where fmap f ma = pure f <*> ma
 
