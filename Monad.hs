@@ -2,6 +2,9 @@ module Monad where
 
 import Control.Monad (join)
 
+----------------------------------------------------------------------------
+-- Free Monad
+
 data List a   = Nil    | Cons a (List a)
 data Free f a = Pure a | Join (f (Free f a))
 
@@ -9,36 +12,41 @@ instance Functor f => Monad (Free f) where
   return = Pure
   Pure a >>= f = f a
   Join m >>= f = Join (fmap (>>= f) m)
-                    -- slow!
 
 foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
 foldFree _   (Pure a)  = return a
 foldFree alg (Join as) = alg as >>= foldFree alg
 
 -----------------------------------------------------------------------------
--- forall r. (f r -> r) -> Cont r a
-newtype F f a = F { runF :: forall r. (f r -> r) -> (a -> r) -> r }
+-- Church Free
+
+newtype F f a = F
+  { runF :: forall r. (f r -> r) -> (a -> r) -> r }
+--{ runF :: forall r. (f r -> r) -> Cont r a}
 
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
-foldF alg (F m) = m (join . alg) return
-
--- runFreer = flip foldF
-newtype Freer f a = Freer
-  { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
-
--- ReaderT alg m where
--- alg :: (forall x. f x -> m x)
--- alg = interpret g . interpret f
-instance Monad (Freer f) where
-  return a      = Freer $ \_   -> return a
-  Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
-                       -- (foldF alg m) >>= (\a -> foldF alg (f a))
+foldF alg (F f) = f (join . alg) return
 
 instance Monad (F f) where
   return a     = F $ \_   _return -> _return a
   F m >>= f    = F $ \alg _return -> m alg (\a -> runF (f a) alg _return)
 
 -----------------------------------------------------------------------------
+-- https://terrorjack.com/posts/2018-11-28-simple-freer.html
+
+newtype Freer f a = Freer
+  { runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a }
+--{ runFreer :: forall m. Monad m => ReaderT (forall x. f x -> m x) m a}
+--  runFreer = flip foldF
+
+instance Monad (Freer f) where
+  return a      = Freer $ \_   -> return a
+  Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
+                       -- (foldF alg m) >>= (\a -> foldF alg (f a))
+
+-----------------------------------------------------------------------------
+-- Effect handler
+
 data Eff f a where
   Return :: a -> Eff f a
   Then   :: f a -> (a -> Eff f b) -> Eff f b
@@ -53,6 +61,8 @@ runState' s (Get   `Then` k) = runState' s (k s)
 runState' _ (Put s `Then` k) = runState' s (k ())
 
 -----------------------------------------------------------------------------
+-- https://blog.poisson.chat/posts/2019-10-26-reasonable-continuations.html
+
 newtype Cont r a = Cont { (>>-) :: (a -> r) -> r }
 
 instance Monad (Cont r) where
