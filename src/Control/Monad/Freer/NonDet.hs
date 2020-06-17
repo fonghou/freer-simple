@@ -1,4 +1,4 @@
-module Control.Monad.Freer.NonDet (NonDet, runNonDetA, runNonDetAll) where
+module Control.Monad.Freer.NonDet (NonDet, runNonDetA) where
 
 import Control.Applicative (Alternative(..), liftA2)
 import Control.Monad.Freer.NonDet.Type
@@ -11,10 +11,6 @@ runNonDetA = relay (return . pure) $ \m k -> case m of
   Empty -> return empty
   Choose -> liftA2 (<|>) (k True) (k False)
 {-# INLINE runNonDetA #-}
-
-runNonDetAll ::  Eff (NonDet ': effs) a -> Eff effs [a]
-runNonDetAll = runNonDetA
-{-# INLINE runNonDetAll #-}
 
 {-|
 $doctest
@@ -35,7 +31,7 @@ test = do
 >>> run . runNonDetA @Maybe $ test
 Just 2
 
->>> take 5 . run . runNonDetAll $ test
+>>> take 5 . run . runNonDetA @[] $ test
 [2,4,6,8,10]
 
  -}

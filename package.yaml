@@ -52,6 +52,13 @@ default-extensions:
 
 dependencies:
 - base >= 4.9 && < 5
+- dlist
+- free
+- mtl
+- polysemy
+- fused-effects
+- async
+- stm
 - criterion
 - doctest
 - hspec
@@ -59,9 +66,6 @@ dependencies:
 - tasty-hunit
 - tasty-quickcheck
 - QuickCheck
-- free
-- polysemy
-- fused-effects
 
 library:
   source-dirs: src
@@ -98,8 +102,6 @@ tests:
     main: Main.hs
     dependencies:
     - freer-simple
-    - async
-    - stm
     ghc-options:
     - -threaded
     - -rtsopts
@@ -114,5 +116,3 @@ benchmarks:
     ghc-options: -O2 -fexpose-all-unfoldings -fspecialise-aggressively
     dependencies:
     - freer-simple
-    - mtl
-    - free

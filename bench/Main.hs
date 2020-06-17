@@ -1,11 +1,12 @@
 module Main (main) where
 
+import Data.DList
 import Control.Monad (replicateM_)
 
 import Control.Monad.Freer
 import Control.Monad.Freer.Error (runError)
 import Control.Monad.Freer.State (get, runState)
-import Control.Monad.Freer.NonDet (runNonDetAll)
+import Control.Monad.Freer.NonDet (runNonDetA)
 
 import qualified Control.Monad.State as MTL
 import qualified Control.Monad.Free as Free
@@ -169,7 +170,8 @@ main =
     bgroup "NQueens" [
         bench "[]" $ whnf (id @[_]) $ queens 8
       , bench "fused.NonDet" $ whnf Eff.run . Eff.runNonDetA @[] $ queens 8
-      , bench "freer.NonDet" $ whnf run . runNonDetAll $ queens 8
+      , bench "freer.NonDet @[]" $ whnf run . runNonDetA @[] $ queens 8
+      , bench "freer.NonDet @DList" $ whnf run . runNonDetA @DList $ queens 8
     ],
     bgroup "HTTP Simple DSL" [
         bench "freer" $ whnf (run . runHttp) prog
