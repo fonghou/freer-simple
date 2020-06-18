@@ -3,8 +3,7 @@
 Run ```stack bench``` to see CountDown benchmarks
   - mtl and fused-effect are fast only with inline.
   - mtl and fused-effect become 100x slower when no inlining.
-  - freer-simple-faster is about 3x slower than inlined mtl, but 30x faster than no-inlined mtl.
-  - This is the best part: freer-simple-faster performance is *consistent with or without inline*.
+  - freer-simple-faster is about 3x slower than mtl when both are inlined, about the same if no inline.
   - polysemy is more than 100x slower than freer-simple-faster.
 
 

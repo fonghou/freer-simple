@@ -158,14 +158,14 @@ main =
         bench "reference"      $ whnf countDown 10000
       , bench "mtl.State (inline)"      $ whnf countDownMTL 10000
       , bench "fused.State (inline)"      $ whnf countDownEff 10000
-      , bench "freer.State"    $ whnf countDownFreer 10000
-      , bench "polysemy.State"    $ whnf countDownPoly 10000
+      , bench "freer.State (inline)"    $ whnf countDownFreer 10000
+      , bench "polysemy.State (inline)"    $ whnf countDownPoly 10000
     ],
     bgroup "Countdown+Except Bench" [
         bench "mtl.ExceptState (no inline)" $ whnf countDownExcMTL 10000
       , bench "fused.ExceptState (no inline)" $ whnf countDownExcEff 10000
-      , bench "freer.ExcState"  $ whnf countDownExc 10000
-      , bench "polysemy.ExcState"  $ whnf countDownExcPoly 10000
+      , bench "freer.ExcState (no inline)"  $ whnf countDownExc 10000
+      , bench "polysemy.ExcState (inline)"  $ whnf countDownExcPoly 10000
     ],
     bgroup "NQueens" [
         bench "[]" $ whnf (id @[_]) $ queens 8

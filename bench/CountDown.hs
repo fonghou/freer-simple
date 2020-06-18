@@ -26,6 +26,7 @@ freer :: Member (Freer.State Int) eff => Eff eff Int
 freer = do
   n <- Freer.get
   if n <= 0 then pure n else Freer.put (n - 1) >> freer
+{-# INLINABLE freer #-}
 
 freer2 :: (Member (Freer.State Int) eff, Member (Freer.Error String) eff) => Eff eff Int
 freer2 = do

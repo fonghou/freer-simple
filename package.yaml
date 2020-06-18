@@ -113,6 +113,6 @@ benchmarks:
   core:
     source-dirs: bench
     main: Main.hs
-    ghc-options: -O2 -fexpose-all-unfoldings -fspecialise-aggressively
+    ghc-options: -O2
     dependencies:
     - freer-simple
