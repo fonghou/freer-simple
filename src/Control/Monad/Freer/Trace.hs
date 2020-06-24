@@ -78,11 +78,11 @@ outputToTrace show' = interpret $ \case Output o -> trace $ show' o
 
 {-# INLINE outputToTrace #-}
 
-traceEffect :: forall e r. (Members '[e, Trace] r, forall x. Show (e x))
-            => Eff r ~> Eff r
-traceEffect (Eff m) = Eff $ \k -> m $ \u ->
+traceEffect :: forall e r. (Members '[e, Trace] r)
+            => (forall x. e x -> String) -> Eff r ~> Eff r
+traceEffect show' (Eff m) = Eff $ \k -> m $ \u ->
   case prj @e u of
     Just e -> do
-      runEff (trace $ show e) k
+      runEff (trace $ show' e) k
       k u
     Nothing -> k u
