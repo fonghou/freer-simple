@@ -40,12 +40,12 @@ newtype Freer f a = Freer
 --  runFreer = flip foldF
 
 instance Monad (Freer f) where
-  return a      = Freer $ \_   -> return a
-  Freer m >>= f = Freer $ \alg -> m alg >>= (\a -> runFreer (f a) alg)
-                       -- (foldF alg m) >>= (\a -> foldF alg (f a))
+  return a  = Freer $ \_   -> return a
+  m >>= f   = Freer $ \alg -> runFreer m alg >>= (\a -> runFreer (f a) alg)
+                            -- (foldF alg m) >>= (\a -> foldF alg (f a))
 
 -----------------------------------------------------------------------------
--- Effect handler
+-- Algebraic Effect
 
 data Eff f a where
   Return :: a -> Eff f a
