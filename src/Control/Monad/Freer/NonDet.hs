@@ -15,8 +15,10 @@ runNonDetA = relay (return . pure) $ \m k -> case m of
 {-|
 $doctest
 
->>> import Control.Monad
+>>> import Data.Functor
 >>> import Control.Applicative
+>>> import Control.Monad
+>>> import Control.Monad.Freer.Error
 
 >>> :{
 test = do
@@ -34,4 +36,6 @@ Just 2
 >>> take 5 . run . runNonDetA @[] $ test
 [2,4,6,8,10]
 
+>>> run . runError . runNonDetA @[] $ (pure 1 <|> throwError ()) `catchError` \() -> pure 2
+Right [1,2]
  -}

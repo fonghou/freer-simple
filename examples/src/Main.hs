@@ -65,7 +65,6 @@ mainBracket =
     runResource (errorThrow @String . runTrace) $ do
       bracket (trace "alloc") (const $ trace "dealloc") $ const $ do
         trace "hi"
-        -- _ <- error "die"
         _ <- throwError "die"
         trace "bye"
 
