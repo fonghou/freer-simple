@@ -36,6 +36,9 @@ Just 2
 >>> take 5 . run . runNonDetA @[] $ test
 [2,4,6,8,10]
 
->>> run . runError . runNonDetA @[] $ (pure 1 <|> throwError ()) `catchError` \() -> pure 2
-Right [1,2]
+>>> run . runError . runNonDetA @[] $ (pure 1 <|> throwError () <|> pure 3) `catchError` \() -> pure 2
+Right [1,2,3]
+
+>>> run . runNonDetA @[] . runError $ (pure 1 <|> throwError () <|> pure 3) `catchError` \() -> pure 2
+[Right 1,Right 2,Right 3]
  -}
