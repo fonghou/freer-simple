@@ -24,97 +24,97 @@ maintainer: Alexis King <lexi.lambda@gmail.com>
 copyright: (c) 2016 Allele Dev; 2017 Ixperta Solutions s.r.o.; 2017 Alexis King
 
 extra-source-files:
-- CHANGELOG.md
-- README.md
+  - CHANGELOG.md
+  - README.md
 
 ghc-options:
-- -Wall
-- -Wcompat
-- -Wincomplete-record-updates
-- -Wincomplete-uni-patterns
-- -Wredundant-constraints
-- -fhide-source-paths
+  - -Wall
+  - -Wcompat
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wredundant-constraints
+  - -fhide-source-paths
 
 default-extensions:
-- ConstraintKinds
-- DataKinds
-- DeriveFunctor
-- FlexibleContexts
-- FlexibleInstances
-- FunctionalDependencies
-- GADTs
-- LambdaCase
-- MultiParamTypeClasses
-- RankNTypes
-- ScopedTypeVariables
-- TypeApplications
-- TypeOperators
+  - ConstraintKinds
+  - DataKinds
+  - DeriveFunctor
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - LambdaCase
+  - MultiParamTypeClasses
+  - RankNTypes
+  - ScopedTypeVariables
+  - TypeApplications
+  - TypeOperators
 
 dependencies:
-- base >= 4.9 && < 5
-- dlist
-- free
-- mtl
-- polysemy
-- fused-effects
-- async
-- stm
-- criterion
-- doctest
-- hspec
-- tasty
-- tasty-hunit
-- tasty-quickcheck
-- QuickCheck
+  - base >= 4.9 && < 5
+  - dlist
+  - free
+  - mtl
+  - polysemy
+  - fused-effects
+  - async
+  - stm
+  - criterion
+  - doctest
+  - hspec
+  - tasty
+  - tasty-hunit
+  - tasty-quickcheck
+  - QuickCheck
 
 library:
   source-dirs: src
   dependencies:
-  - natural-transformation >= 0.2
-  - transformers-base
-  - template-haskell >= 2.11
-  - transformers
-  - exceptions
-  - microlens
-  - mmorph
-  - mtl
-  - resourcet
-  - random
-  - async
-  - stm
+    - natural-transformation >= 0.2
+    - transformers-base
+    - template-haskell >= 2.11
+    - transformers
+    - exceptions
+    - microlens
+    - mmorph
+    - mtl
+    - resourcet
+    - random
+    - async
+    - stm
 
 executables:
   freer-examples:
     source-dirs: examples/src
     main: Main.hs
     dependencies:
-    - freer-simple
+      - freer-simple
 
 tests:
   unit:
     source-dirs: tests
     main: Main.hs
     dependencies:
-    - freer-simple
+      - freer-simple
 
   specs:
     source-dirs: specs
     main: Main.hs
     dependencies:
-    - freer-simple
+      - freer-simple
     ghc-options:
-    - -threaded
-    - -rtsopts
+      - -threaded
+      - -rtsopts
     build-tools:
-    - hspec-discover >= 2.0
+      - hspec-discover >= 2.0
 
 benchmarks:
   core:
     source-dirs: bench
     main: Core.hs
     ghc-options:
-    - -O2
-    - -threaded
-    - -rtsopts
+      - -O2
+      - -threaded
+      - -rtsopts
     dependencies:
-    - freer-simple
+      - freer-simple
