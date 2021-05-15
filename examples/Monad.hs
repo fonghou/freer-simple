@@ -1,6 +1,6 @@
 module Monad where
 
-import Control.Monad (join)
+import Control.Monad (ap, join)
 import Prelude
 
 -----------------------------------------------------------------------------
@@ -24,10 +24,11 @@ runState' _ (Put s `Bind` k) = runState' s (k ())
 
 newtype F f a = F
   {runF :: forall r. (f r -> r) -> (a -> r) -> r}
+  deriving (Functor)
 
 instance Monad (F f) where
   return a = F $ \_ _return -> _return a
-  F m >>= f = F $ \alg _return -> m alg (\a -> runF (f a) alg _return)
+  m >>= f = F $ \alg _return -> runF m alg (\a -> runF (f a) alg _return)
 
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
 foldF alg (F f) = f (join . alg) return
@@ -35,17 +36,17 @@ foldF alg (F f) = f (join . alg) return
 -----------------------------------------------------------------------------
 
 newtype Eff f a = Eff
-  --   foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
-  {runFreer :: forall m. Monad m => (forall x. f x -> m x) -> m a}
+  {foldEff :: forall m. Monad m => (forall x. f x -> m x) -> m a}
 
 instance Monad (Eff f) where
   return a = Eff $ \_ -> return a
-  m >>= f = Eff $ \alg -> runFreer m alg >>= (\a -> runFreer (f a) alg)
+  m >>= f = Eff $ \alg -> foldEff m alg >>= (\a -> foldEff (f a) alg)
 
 -----------------------------------------------------------------------------
 -- https://blog.poisson.chat/posts/2019-10-26-reasonable-continuations.html
 
 newtype Cont r a = Cont {(>>-) :: (a -> r) -> r}
+  deriving (Functor)
 
 instance Monad (Cont r) where
   return a = Cont $ \_return -> _return a
@@ -92,23 +93,18 @@ lift m = Cont (m >>=)
 type Codensity m a = forall r. Cont (m r) a
 
 -------------------------------------------------------------------------------
-instance Functor (F f) where
-  fmap f a = pure f <*> a
 
 instance Applicative (F f) where
   pure = return
-  mf <*> ma = do f <- mf; a <- ma; return (f a)
-
-instance Applicative (Eff f) where
-  pure = return
-  mf <*> ma = do f <- mf; a <- ma; return (f a)
+  (<*>) = ap
 
 instance Functor (Eff f) where
   fmap f a = pure f <*> a
 
-instance Functor (Cont r) where
-  fmap f ma = pure f <*> ma
+instance Applicative (Eff f) where
+  pure = return
+  (<*>) = ap
 
 instance Applicative (Cont r) where
   pure = return
-  mf <*> ma = do f <- mf; a <- ma; return (f a)
+  (<*>) = ap
