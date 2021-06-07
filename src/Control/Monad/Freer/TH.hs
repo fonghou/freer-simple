@@ -1,44 +1,43 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 -- Originally ported from code written by Sandy Maguire (@isovector), available
 -- at https://github.com/IxpertaSolutions/freer-effects/pull/28.
 
-{-|
-This module provides Template Haskell functions for automatically generating
-effect operation functions (that is, functions that use 'send') from a given
-effect algebra. For example, using the @FileSystem@ effect from the example in
-the module documentation for "Control.Monad.Freer", we can write the following:
-
-@
-data FileSystem r where
-  ReadFile :: 'FilePath' -> FileSystem 'String'
-  WriteFile :: 'FilePath' -> 'String' -> FileSystem ()
-'makeEffect' ''FileSystem
-@
-
-This will automatically generate the following functions:
-
-@
-readFile :: 'Member' FileSystem effs => 'FilePath' -> 'Eff' effs 'String'
-readFile a = 'send' (ReadFile a)
-
-writeFile :: 'Member' FileSystem effs => 'FilePath' -> 'String' -> 'Eff' effs ()
-writeFile a b = 'send' (WriteFile a b)
-@
--}
+-- |
+-- This module provides Template Haskell functions for automatically generating
+-- effect operation functions (that is, functions that use 'send') from a given
+-- effect algebra. For example, using the @FileSystem@ effect from the example in
+-- the module documentation for "Control.Monad.Freer", we can write the following:
+--
+-- @
+-- data FileSystem r where
+--   ReadFile :: 'FilePath' -> FileSystem 'String'
+--   WriteFile :: 'FilePath' -> 'String' -> FileSystem ()
+-- 'makeEffect' ''FileSystem
+-- @
+--
+-- This will automatically generate the following functions:
+--
+-- @
+-- readFile :: 'Member' FileSystem effs => 'FilePath' -> 'Eff' effs 'String'
+-- readFile a = 'send' (ReadFile a)
+--
+-- writeFile :: 'Member' FileSystem effs => 'FilePath' -> 'String' -> 'Eff' effs ()
+-- writeFile a b = 'send' (WriteFile a b)
+-- @
 module Control.Monad.Freer.TH
-  ( makeEffect
-  , makeEffect_
+  ( makeEffect,
+    makeEffect_,
   )
 where
 
 import Control.Monad (forM, unless)
-import Control.Monad.Freer (send, Member, Eff)
+import Control.Monad.Freer (Eff, Member, send)
 import Data.Char (toLower)
 import Language.Haskell.TH
 import Prelude
-
 
 -- | If @T@ is a GADT representing an effect algebra, as described in the module
 -- documentation for "Control.Monad.Freer", @$('makeEffect' ''T)@ automatically
@@ -80,53 +79,58 @@ genFreer makeSigs tcName = do
       sigs <- filter (const makeSigs) <$> mapM genSig cons
       decs <- mapM genDecl cons
       return $ sigs ++ decs
-
     _ -> fail "makeEffect expects a type constructor"
 
 -- | Given the name of a GADT constructor, return the name of the corresponding
 -- lifted function.
 getDeclName :: Name -> Name
 getDeclName = mkName . overFirst toLower . nameBase
- where
-  overFirst f (a : as) = f a : as
-  overFirst _ as       = as
+  where
+    overFirst f (a : as) = f a : as
+    overFirst _ as = as
 
 -- | Builds a function definition of the form @x a b c = send $ X a b c@.
 genDecl :: Con -> Q Dec
-genDecl (ForallC _       _     con) = genDecl con
-genDecl (GadtC   [cName] tArgs _  ) = do
+genDecl (ForallC _ _ con) = genDecl con
+genDecl (GadtC [cName] tArgs _) = do
   let fnName = getDeclName cName
-  let arity  = length tArgs - 1
+  let arity = length tArgs - 1
   dTypeVars <- forM [0 .. arity] $ const $ newName "a"
-  return $ FunD fnName . pure $ Clause
-    (VarP <$> dTypeVars)
-    (NormalB . AppE (VarE 'send) $ foldl
-      (\b -> AppE b . VarE)
-      (ConE cName)
-      dTypeVars
-    )
-    []
+  return $
+    FunD fnName . pure $
+      Clause
+        (VarP <$> dTypeVars)
+        ( NormalB . AppE (VarE 'send) $
+            foldl
+              (\b -> AppE b . VarE)
+              (ConE cName)
+              dTypeVars
+        )
+        []
 genDecl _ = fail "genDecl expects a GADT constructor"
 
 -- | Generates a function type from the corresponding GADT type constructor
 -- @x :: Member (Effect e) effs => a -> b -> c -> Eff effs r@.
 genType :: Con -> Q Type
-genType (ForallC tyVarBindings conCtx con)
-  = ForallT tyVarBindings conCtx <$> genType con
-genType (GadtC   _ tArgs' (AppT eff tRet)) = do
+genType (ForallC tyVarBindings conCtx con) =
+  ForallT tyVarBindings conCtx <$> genType con
+genType (GadtC _ tArgs' (AppT eff tRet)) = do
   effs <- newName "effs"
-  let
-    tArgs            = fmap snd tArgs'
-    memberConstraint = ConT ''Member `AppT` eff `AppT` VarT effs
-    resultType       = ConT ''Eff `AppT` VarT effs `AppT` tRet
+  let tArgs = fmap snd tArgs'
+      memberConstraint = ConT ''Member `AppT` eff `AppT` VarT effs
+      resultType = ConT ''Eff `AppT` VarT effs `AppT` tRet
 
   return
+#if MIN_VERSION_template_haskell(2,17,0)
+    .  ForallT [PlainTV effs SpecifiedSpec] [memberConstraint]
+#else
     .  ForallT [PlainTV effs] [memberConstraint]
-    .  foldArrows
-    $  tArgs
-    ++ [resultType]
+#endif
+    . foldArrows
+    $ tArgs
+      ++ [resultType]
 -- TODO: Although this should never happen, we obviously need a better error message below.
-genType _       = fail "genSig expects a GADT constructor"
+genType _ = fail "genSig expects a GADT constructor"
 
 -- | Turn all (KindedTV tv StarT) into (PlainTV tv) in the given type
 -- This can prevent the need for KindSignatures
@@ -141,18 +145,23 @@ simplifyBndrs t = t
 
 -- | Turn TvVarBndrs of the form (KindedTV tv StarT) into (PlainTV tv)
 -- This can prevent the need for KindSignatures
+#if MIN_VERSION_template_haskell(2,17,0)
+simplifyBndr :: TyVarBndr flag -> TyVarBndr flag
+simplifyBndr (KindedTV tv flag StarT) = PlainTV tv flag
+simplifyBndr bndr = bndr
+#else
 simplifyBndr :: TyVarBndr -> TyVarBndr
 simplifyBndr (KindedTV tv StarT) = PlainTV tv
 simplifyBndr bndr = bndr
+#endif
 
 -- | Generates a type signature of the form
 -- @x :: Member (Effect e) effs => a -> b -> c -> Eff effs r@.
 genSig :: Con -> Q Dec
 genSig con = do
-  let
-    getConName (ForallC _ _ c) = getConName c
-    getConName (GadtC [n] _ _) = pure n
-    getConName c = fail $ "failed to get GADT name from " ++ show c
+  let getConName (ForallC _ _ c) = getConName c
+      getConName (GadtC [n] _ _) = pure n
+      getConName c = fail $ "failed to get GADT name from " ++ show c
   conName <- getConName con
   SigD (getDeclName conName) <$> simplifyBndrs <$> genType con
 
