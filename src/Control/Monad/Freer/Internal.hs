@@ -96,7 +96,7 @@ instance Functor (Eff f) where
   {-# INLINE fmap #-}
 
 instance Applicative (Eff f) where
-  pure a = Eff $ const $ pure a
+  pure a = Eff $ \_ -> pure a
   {-# INLINE pure #-}
   Eff f <*> Eff a = Eff $ \k -> f k <*> a k
   {-# INLINE (<*>) #-}

@@ -1,0 +1,2 @@
+packages: freer-simple.cabal
+with-compiler: /home/haskeller/.ghcup/bin/ghc-9.0
