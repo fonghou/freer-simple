@@ -4,23 +4,11 @@ import Control.Monad (ap, join)
 import Prelude
 
 -----------------------------------------------------------------------------
--- Algebraic Effect
+-- Free Monad
 
-data Free f a where
-  Pure :: a -> Free f a
-  Bind :: f a -> (a -> Free f b) -> Free f b
-
-data State' s a where
-  Get :: State' s s
-  Put :: s -> State' s ()
-
-runState' :: s -> Free (State' s) a -> (s, a)
-runState' s (Pure x) = (s, x)
-runState' s (Get `Bind` k) = runState' s (k s)
-runState' _ (Put s `Bind` k) = runState' s (k ())
-
------------------------------------------------------------------------------
--- Church Free
+data Free f a
+  = Pure a
+  | Join (f (Free f a))
 
 newtype F f a = F
   {runF :: forall r. (f r -> r) -> (a -> r) -> r}
@@ -30,10 +18,14 @@ instance Monad (F f) where
   return a = F $ \_ _return -> _return a
   m >>= f = F $ \alg _return -> runF m alg (\a -> runF (f a) alg _return)
 
+fromF :: F f a -> Free f a
+fromF (F f) = f Join Pure
+
 foldF :: Monad m => (forall x. f x -> m x) -> F f a -> m a
-foldF alg (F f) = f (join . alg) return
+foldF alg (F f) = f (join . alg) pure
 
 -----------------------------------------------------------------------------
+-- Freer Monad
 
 newtype Eff f a = Eff
   {foldEff :: forall m. Monad m => (forall x. f x -> m x) -> m a}
@@ -41,6 +33,22 @@ newtype Eff f a = Eff
 instance Monad (Eff f) where
   return a = Eff $ \_ -> return a
   m >>= f = Eff $ \alg -> foldEff m alg >>= (\a -> foldEff (f a) alg)
+
+-----------------------------------------------------------------------------
+-- Effect Handler
+
+data Monad' f a where
+  Return :: a -> Monad' f a
+  Bind :: f a -> (a -> Monad' f b) -> Monad' f b
+
+data State' s a where
+  Get :: State' s s
+  Put :: s -> State' s ()
+
+runState' :: s -> Monad' (State' s) a -> (s, a)
+runState' s (Return x) = (s, x)
+runState' s (Get `Bind` k) = runState' s (k s)
+runState' _ (Put s `Bind` k) = runState' s (k ())
 
 -----------------------------------------------------------------------------
 -- https://blog.poisson.chat/posts/2019-10-26-reasonable-continuations.html

@@ -19,6 +19,7 @@ mtl2 :: (MTL.MonadState Int m, MTL.MonadError String m) => m Int
 mtl2 = do
   n <- MTL.get
   if n <= 0 then MTL.throwError "wat" else MTL.put (n - 1) >> mtl
+{-# INLINEABLE mtl2 #-}
 
 freer :: Member (Freer.State Int) eff => Eff eff Int
 freer = do

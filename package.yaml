@@ -55,7 +55,7 @@ dependencies:
   - dlist
   - free
   - mtl
-  - polysemy
+  # - polysemy
   - fused-effects
   - async
   - stm
@@ -111,7 +111,7 @@ tests:
 benchmarks:
   core:
     source-dirs: bench
-    main: Core.hs
+    main: Main.hs
     ghc-options:
       - -O2
       - -threaded
