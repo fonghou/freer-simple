@@ -147,5 +147,5 @@ panic ::
   ) =>
   Eff (Error e ': effs) a ->
   Eff effs a
-panic = interpret $ \case
+panic = subsume @m $ \case
   (Error e) -> liftIO $ throwIO $ Panic' e callStack
