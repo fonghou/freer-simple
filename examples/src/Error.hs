@@ -32,13 +32,12 @@ run1 =
   test1
     & runInputConst @String "world"
     & panic @FooErr
-    & errorThrow @FooErr
     & outputToTrace id
     & runTrace
     & runM
 
 run1' :: IO ()
-run1' = catch run1 $ \(ErrorException e) -> do
+run1' = catch run1 $ \e -> do
   print (e :: FooErr)
 
 test2 :: (Members [Input String, Output String, Trace] m) => Eff m ()
@@ -55,8 +54,8 @@ run2 =
 
 test3 :: Members '[State String, Error FooErr] r => Eff r String
 test3 = do
-  let throwing,
-        catching ::
+  let throwing
+        , catching ::
           Members '[State String, Error FooErr] r => Eff r String
       throwing = do
         modify (++ "-throw")
@@ -66,13 +65,6 @@ test3 = do
         modify (++ "-catch")
         get
   catchError @FooErr throwing (\e -> catching >> throwError e)
-
-runPanic :: (String, String)
-runPanic =
-  test3
-    & runState "Error before State"
-    & panic @FooErr
-    & run
 
 runError' :: Either FooErr (String, String)
 runError' =

@@ -7,41 +7,41 @@ import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
 import Control.Monad.Freer.Resource
 import Data.IORef
-import Test.Hspec
+import Test.Hspec (Spec, describe, it, shouldBe, shouldReturn)
 
 spec :: Spec
 spec = do
   describe "bracket_" $ do
     it "runs a cleanup action on error (IORef)" $ do
       outputs <- newIORef []
-      (result :: Either (ErrorException ErrorCall) ()) <-
+      Left (Panic err) <-
         try
           . runResource
-            ( errorThrow @ErrorCall
+            ( panic @ErrorCall
                 . runOutputMonoidIORef @[String] outputs id
                 . runInputConst "error"
             )
-          $ bracket_ (output ["setup"]) (output ["teardown"])
-          $ do
-            output ["use"]
-            msg <- input @String
-            throwError $ ErrorCall msg
+          $ bracket_ (output ["setup"]) (output ["teardown"]) $
+            do
+              output ["use"]
+              msg <- input @String
+              throwError $ ErrorCall msg
       readIORef outputs `shouldReturn` ["setup", "use", "teardown"]
-      result `shouldBe` Left (ErrorException $ ErrorCall "error")
+      err `shouldBe` (ErrorCall "error")
 
     it "runs a cleanup action on success (TVar)" $ do
       outputs <- newTVarIO []
-      (result :: Either (ErrorException ErrorCall) ()) <-
+      (Right result :: Either (Panic ErrorCall) ()) <-
         try
           . runResource
-            ( errorThrow @ErrorCall
+            ( panic @ErrorCall
                 . runOutputMonoidTVar @[String] outputs id
             )
-          $ bracket_ (output ["setup"]) (output ["teardown"])
-          $ do
-            output ["use"]
-            throwError (ErrorCall "error")
-            output ["done"]
-            `catchError` (\(ErrorCall msg) -> output [msg])
+          $ bracket_ (output ["setup"]) (output ["teardown"]) $
+            do
+              output ["use"]
+              _ <- throwError (ErrorCall "error")
+              output ["done"]
+              `catchError` (\(ErrorCall msg) -> output [msg])
       readTVarIO outputs `shouldReturn` ["setup", "use", "error", "teardown"]
-      result `shouldBe` Right ()
+      result `shouldBe` ()
