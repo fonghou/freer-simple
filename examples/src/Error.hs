@@ -1,8 +1,10 @@
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Error where
 
 import Control.Exception
+import Control.Monad
 import Control.Monad.Freer
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Input
@@ -16,29 +18,34 @@ newtype FooErr = FooErr String deriving (Show)
 
 instance Exception FooErr
 
-test1 ::
-  (Members [Input String, Output String, Error FooErr, Trace] m) =>
-  Eff m ()
+test1 :: _ => Eff m ()
 test1 = do
   trace "debug"
   i <- input @String
   output "hello"
   output i
-  throwError $ FooErr "test1"
+  void $ throwError $ FooErr "in test1"
   trace "end"
+
+test1' :: _ => Eff m ()
+test1' =
+  handleError test1 $
+    \(e :: FooErr) -> do
+      output ("catched " <> show e)
+      throwError "rethrow in test1'"
 
 run1 :: HasCallStack => IO ()
 run1 =
-  test1
+  test1'
+    & panic @String
     & runInputConst @String "world"
-    & panic @FooErr
     & outputToTrace id
     & runTrace
     & runM
 
 run1' :: IO ()
-run1' = catch run1 $ \e -> do
-  print (e :: FooErr)
+run1' = catch run1 $ \(e :: SomeException) -> do
+  putStrLn $ displayException e
 
 test2 :: (Members [Input String, Output String, Trace] m) => Eff m ()
 test2 = handleError @FooErr test1 $ \e -> output $ show e
@@ -59,7 +66,7 @@ test3 = do
           Members '[State String, Error FooErr] r => Eff r String
       throwing = do
         modify (++ "-throw")
-        throwError $ FooErr "test3"
+        void $ throwError $ FooErr "test3"
         get
       catching = do
         modify (++ "-catch")

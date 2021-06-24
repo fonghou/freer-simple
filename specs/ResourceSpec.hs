@@ -1,7 +1,7 @@
 module ResourceSpec where
 
 import Control.Concurrent.STM
-import Control.Exception (ErrorCall (..), try)
+import Control.Exception (ErrorCall (..), SomeException, try)
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
@@ -31,8 +31,8 @@ spec = do
 
     it "runs a cleanup action on success (TVar)" $ do
       outputs <- newTVarIO []
-      (Right result :: Either (Panic ErrorCall) ()) <-
-        try
+      Right result <-
+        try @SomeException
           . runResource
             ( panic @ErrorCall
                 . runOutputMonoidTVar @[String] outputs id

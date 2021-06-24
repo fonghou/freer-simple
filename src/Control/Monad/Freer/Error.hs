@@ -139,11 +139,11 @@ pattern Panic e <- Panic' e _
 
 panic ::
   forall e m effs a.
-  ( Typeable e
+  ( HasCallStack
   , Show e
-  , HasCallStack
-  , LastMember m effs
+  , Typeable e
   , MonadIO m
+  , LastMember m effs
   ) =>
   Eff (Error e ': effs) a ->
   Eff effs a
