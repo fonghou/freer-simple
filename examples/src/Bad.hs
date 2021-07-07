@@ -16,16 +16,16 @@ bad =
     runError @String $
       interpret (\SomeAction -> throwError "not caught") $
         do
-          someAction
+          _ <- someAction
           throwError "caught"
-          `catchError` \(e :: String) -> return e
+            `catchError` \(e :: String) -> return e
 
-bad2 :: String
+bad2 :: (String, String)
 bad2 =
   run $
     runReader "unlocaled" $
       interpret (\SomeAction -> ask) $
         local (const "localed") $ do
           x <- ask
-          someAction
-          pure x
+          y <- someAction
+          pure (x, y)

@@ -61,9 +61,7 @@ run2 =
 
 test3 :: Members '[State String, Error FooErr] r => Eff r String
 test3 = do
-  let throwing
-        , catching ::
-          Members '[State String, Error FooErr] r => Eff r String
+  let throwing, catching :: Members '[State String, Error FooErr] r => Eff r String
       throwing = do
         modify (++ "-throw")
         void $ throwError $ FooErr "test3"

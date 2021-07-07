@@ -16,8 +16,6 @@
 -}
 module Control.Monad.Freer.Error (
   Error (..),
-  Panic,
-  pattern Panic,
   throwError,
   catchError,
   catchJust,
@@ -27,6 +25,8 @@ module Control.Monad.Freer.Error (
   mapError,
   runError,
   panic,
+  Panic,
+  pattern Panic,
 ) where
 
 import Control.Exception (Exception (..), throwIO)
@@ -130,9 +130,12 @@ catchJust f m k = catchError m $ \e -> case f e of
 data Panic e = Panic' e CallStack
   deriving (Show)
 
-instance (Show e, Typeable e) => Exception (Panic e) where
+instance (Typeable e, Show e) => Exception (Panic e) where
   displayException (Panic' e stack) =
-    show e ++ "\n" ++ prettyCallStack stack
+    ("Control.Monad.Freer.Error.Panic (" ++)
+      . (show e ++)
+      . (")\n" ++)
+      $ (prettyCallStack stack)
 
 pattern Panic :: e -> Panic e
 pattern Panic e <- Panic' e _
@@ -140,10 +143,10 @@ pattern Panic e <- Panic' e _
 panic ::
   forall e m effs a.
   ( HasCallStack
+  , LastMember m effs
+  , MonadIO m
   , Show e
   , Typeable e
-  , MonadIO m
-  , LastMember m effs
   ) =>
   Eff (Error e ': effs) a ->
   Eff effs a

@@ -15,8 +15,8 @@ newtype F f a = F
   deriving (Functor)
 
 instance Monad (F f) where
-  return a = F $ \_ _return -> _return a
-  m >>= f = F $ \alg _return -> runF m alg (\a -> runF (f a) alg _return)
+  return a = F $ \_ return' -> return' a
+  m >>= f = F $ \alg return' -> runF m alg (\a -> runF (f a) alg return')
 
 fromF :: F f a -> Free f a
 fromF (F f) = f Join Pure
@@ -57,8 +57,8 @@ newtype Cont r a = Cont {(>>-) :: (a -> r) -> r}
   deriving (Functor)
 
 instance Monad (Cont r) where
-  return a = Cont $ \_return -> _return a
-  m >>= f = Cont $ \_return -> m >>- (\a -> f a >>- _return)
+  return a = Cont $ \return' -> return' a
+  m >>= f = Cont $ \return' -> m >>- (\a -> f a >>- return')
 
 runC :: Cont r r -> r
 runC m = m >>- id
