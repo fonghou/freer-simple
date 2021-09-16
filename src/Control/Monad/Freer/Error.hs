@@ -16,6 +16,7 @@
 -}
 module Control.Monad.Freer.Error (
   Error (..),
+  ErrorEx (..),
   throwError,
   catchError,
   catchJust,
@@ -24,9 +25,7 @@ module Control.Monad.Freer.Error (
   liftEitherM,
   mapError,
   runError,
-  panic,
-  Panic,
-  pattern Panic,
+  runErrorEx,
 ) where
 
 import Control.Exception (Exception (..), throwIO)
@@ -127,20 +126,17 @@ catchJust f m k = catchError m $ \e -> case f e of
  will have local state semantics in regards to 'Error' effects
  interpreted this way.
 -}
-data Panic e = Panic' e CallStack
+data ErrorEx e = ErrorEx e CallStack
   deriving (Show)
 
-instance (Typeable e, Show e) => Exception (Panic e) where
-  displayException (Panic' e stack) =
-    ("Control.Monad.Freer.Error.Panic (" ++)
+instance (Typeable e, Show e) => Exception (ErrorEx e) where
+  displayException (ErrorEx e stack) =
+    ("Control.Monad.Freer.Error.ErrorEx (" ++)
       . (show e ++)
       . (")\n" ++)
       $ (prettyCallStack stack)
 
-pattern Panic :: e -> Panic e
-pattern Panic e <- Panic' e _
-
-panic ::
+runErrorEx ::
   forall e m effs a.
   ( HasCallStack
   , LastMember m effs
@@ -150,5 +146,5 @@ panic ::
   ) =>
   Eff (Error e ': effs) a ->
   Eff effs a
-panic = subsume @m $ \case
-  (Error e) -> liftIO $ throwIO $ Panic' e callStack
+runErrorEx = subsume @m $ \case
+  (Error e) -> liftIO $ throwIO $ ErrorEx e callStack

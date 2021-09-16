@@ -37,7 +37,7 @@ test1' =
 run1 :: HasCallStack => IO ()
 run1 =
   test1'
-    & panic @String
+    & runErrorEx @String
     & runInputConst @String "world"
     & outputToTrace id
     & runTrace

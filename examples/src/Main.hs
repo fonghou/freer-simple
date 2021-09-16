@@ -67,7 +67,7 @@ mainConsoleB = runM (runCapitalize (runConsoleM capitalizingService))
 mainBracket :: IO ()
 mainBracket =
   X.handle @X.SomeException print $
-    runResource (panic @String . runTrace) $ do
+    runResource (runErrorEx @String . runTrace) $ do
       bracket (trace "alloc") (const $ trace "dealloc") $
         const $ do
           trace "hi"

@@ -1,7 +1,7 @@
 module ResourceSpec where
 
 import Control.Concurrent.STM
-import Control.Exception (ErrorCall (..), SomeException, try)
+import Control.Exception (ErrorCall (..), try)
 import Control.Monad.Freer.Error
 import Control.Monad.Freer.Input
 import Control.Monad.Freer.Output
@@ -14,10 +14,10 @@ spec = do
   describe "bracket_" $ do
     it "runs a cleanup action on error (IORef)" $ do
       outputs <- newIORef []
-      Left (Panic err) <-
+      Left (ErrorEx err _) <-
         try
           . runResource
-            ( panic @ErrorCall
+            ( runErrorEx @ErrorCall
                 . runOutputMonoidIORef @[String] outputs id
                 . runInputConst "error"
             )
@@ -32,9 +32,9 @@ spec = do
     it "runs a cleanup action on success (TVar)" $ do
       outputs <- newTVarIO []
       Right result <-
-        try @SomeException
+        try @ErrorCall
           . runResource
-            ( panic @ErrorCall
+            ( runErrorEx @ErrorCall
                 . runOutputMonoidTVar @[String] outputs id
             )
           $ bracket_ (output ["setup"]) (output ["teardown"]) $
