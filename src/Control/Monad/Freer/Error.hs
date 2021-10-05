@@ -139,10 +139,10 @@ instance (Typeable e, Show e) => Exception (ErrorEx e) where
 runErrorEx ::
   forall e m effs a.
   ( HasCallStack
-  , LastMember m effs
-  , MonadIO m
   , Show e
   , Typeable e
+  , MonadIO m
+  , LastMember m effs
   ) =>
   Eff (Error e ': effs) a ->
   Eff effs a
