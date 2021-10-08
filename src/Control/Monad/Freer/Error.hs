@@ -127,19 +127,19 @@ catchJust f m k = catchError m $ \e -> case f e of
  interpreted this way.
 -}
 data ErrorEx e = ErrorEx e CallStack
-  deriving (Show)
 
-instance (Typeable e, Show e) => Exception (ErrorEx e) where
-  displayException (ErrorEx e stack) =
-    ("Control.Monad.Freer.Error.ErrorEx (" ++)
-      . (show e ++)
-      . (")\n" ++)
-      $ (prettyCallStack stack)
+instance Typeable e => Show (ErrorEx e) where
+  showsPrec p (ErrorEx e cs)
+    = ("Control.Freer.Error.ErrorEx (" ++)
+    . showsPrec p (typeOf e)
+    . (") " ++)
+    . showsPrec p (prettyCallStack cs)
+
+instance Typeable e => Exception (ErrorEx e)
 
 runErrorEx ::
   forall e m effs a.
   ( HasCallStack
-  , Show e
   , Typeable e
   , MonadIO m
   , LastMember m effs

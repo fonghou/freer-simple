@@ -1,14 +1,14 @@
-resolver: lts-17.4
+resolver: lts-18.10
 allow-newer: true
 
 packages:
-- '.'
+  - "."
 
 extra-deps:
-- extensible-effects-5.0.0.1
-- fused-effects-1.1.1.0
-- polysemy-1.4.0.0
-- polysemy-plugin-0.2.5.2
+  - extensible-effects-5.0.0.1
+  - fused-effects-1.1.1.0
+  - polysemy-1.4.0.0
+  - polysemy-plugin-0.2.5.2
 
 flags: {}
 extra-package-dbs: []

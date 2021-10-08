@@ -1,1 +1,1 @@
---command="stack ghci --test --ghci-options='-fno-code -fno-break-on-exception -fno-break-on-error -ferror-spans -v1 -j' --package pretty-simple" -W -S -a
+--reverse-errors --clear -o .ghcid.out
