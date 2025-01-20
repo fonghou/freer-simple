@@ -14,18 +14,18 @@ import CountDown
 import Criterion (bench, bgroup, nf)
 import Criterion.Main (defaultMain)
 
--- countDown :: Int -> (Int, Int)
--- countDown start = Freer.run (Freer.runState start freer)
+countDown :: Int -> (Int, Int)
+countDown start = Freer.run (Freer.runState start freer)
 
-countDownExc :: Int -> Either String (Int, Int)
-countDownExc start = Freer.run $ Freer.runError (Freer.runState start CountDown.freer2)
+-- countDownExc :: Int -> Either String (Int, Int)
+-- countDownExc start = Freer.run $ Freer.runError (Freer.runState start CountDown.freer2)
 
 main :: IO ()
 main =
   defaultMain
     [ bgroup
         "Countdown Bench"
-        [ bench "countDown" $ nf countDownExc 10000
+        [ bench "countDown" $ nf countDown 10000
         -- , bench "countDownExc" $ nf countDownExc 10000
         ]
     ]

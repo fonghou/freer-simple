@@ -1,0 +1,173 @@
+
+benchmarking Countdown Bench/freer.State (inline)
+time                 19.14 μs   (18.74 μs .. 19.66 μs)
+                     0.996 R²   (0.994 R² .. 0.998 R²)
+mean                 18.86 μs   (18.61 μs .. 19.24 μs)
+std dev              1.027 μs   (754.2 ns .. 1.533 μs)
+variance introduced by outliers: 63% (severely inflated)
+
+===========================================================================
+
+Rule fired: unpack (GHC.Base)
+Rule fired: unpack (GHC.Base)
+Rule fired:
+    SPEC/Core $fMembertr @ (State Int) @ '[State Int, Identity] (Core)
+Rule fired: Class op inj (BUILTIN)
+Rule fired: SPEC/Core freer @ '[State Int, Identity] (Core)
+Rule fired: Class op inj (BUILTIN)
+Rule fired: SPEC/Core freer @ '[State Int, Identity] (Core)
+Rule fired: Class op $p1Monad (BUILTIN)
+Rule fired: Class op $p1Applicative (BUILTIN)
+Rule fired: Class op fmap (BUILTIN)
+Rule fired: Class op >>= (BUILTIN)
+Rule fired: Class op return (BUILTIN)
+Rule fired: Class op $p1Monad (BUILTIN)
+Rule fired: Class op pure (BUILTIN)
+Rule fired: Class op >>= (BUILTIN)
+Rule fired: Class op $p1Monad (BUILTIN)
+Rule fired: Class op pure (BUILTIN)
+Rule fired: Class op $p1Monad (BUILTIN)
+Rule fired: Class op pure (BUILTIN)
+Rule fired: unpack-list (GHC.Base)
+Rule fired: unpack-list (GHC.Base)
+Rule fired: Class op $p1Monad (BUILTIN)
+Rule fired: Class op >>= (BUILTIN)
+Rule fired: Class op >>= (BUILTIN)
+Rule fired: Class op $p1Monad (BUILTIN)
+Rule fired: Class op $p1Applicative (BUILTIN)
+Rule fired: SC:$w$sfreer0 (Core)
+Rule fired: Class op >>= (BUILTIN)
+Rule fired: Class op >>= (BUILTIN)
+Rule fired: SC:$w$sfreer0 (Core)
+Rule fired: SC:$w$sfreer0 (Core)
+
+==================== Tidy Core ====================
+Result size of Tidy Core
+  = {terms: 115, types: 236, coercions: 78, joins: 0/0}
+
+-- RHS size: {terms: 1, types: 0, coercions: 0, joins: 0/0}
+main12 :: Addr#
+main12 = "countDown"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+main11 :: [Char]
+main11 = unpackCString# main12
+
+-- RHS size: {terms: 1, types: 0, coercions: 0, joins: 0/0}
+main14 :: Addr#
+main14 = "Countdown Bench"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+main13 :: [Char]
+main13 = unpackCString# main14
+
+-- RHS size: {terms: 3, types: 2, coercions: 0, joins: 0/0}
+main9 :: Applicative (StateT Int Identity)
+main9 = $fApplicativeStateT $fFunctorIdentity $fMonadIdentity
+
+Rec {
+-- RHS size: {terms: 22, types: 74, coercions: 5, joins: 0/0}
+$sfreer1
+  :: ((forall x.
+       Union '[State Int, Identity] x -> Int -> Identity (x, Int))
+      ~R# (forall x.
+           Union '[State Int, Identity] x -> StateT Int Identity x))
+     -> Applicative (StateT Int Identity) => Int -> Identity (Int, Int)
+$sfreer1
+  = \ (sg
+         :: (forall x.
+             Union '[State Int, Identity] x -> Int -> Identity (x, Int))
+            ~R# (forall x.
+                 Union '[State Int, Identity] x -> StateT Int Identity x))
+      (sc :: Applicative (StateT Int Identity))
+      (eta :: Int) ->
+      case eta of wild { I# x ->
+      case <=# x 0# of {
+        __DEFAULT -> $sfreer1 @~ <Co:1> sc (I# (-# x 1#));
+        1# -> ((pure sc wild) `cast` <Co:4>) wild
+      }
+      }
+end Rec }
+
+-- RHS size: {terms: 9, types: 8, coercions: 40, joins: 0/0}
+main8 :: Int -> Identity (Int, Int)
+main8
+  = \ (w :: Int) ->
+      case ($sfreer1 @~ <Co:31> main9 w) `cast` <Co:4> of { (a1, b1) ->
+      (b1, a1) `cast` <Co:5>
+      }
+
+-- RHS size: {terms: 1, types: 0, coercions: 0, joins: 0/0}
+$trModule4 :: Addr#
+$trModule4 = "main"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+$trModule3 :: TrName
+$trModule3 = TrNameS $trModule4
+
+-- RHS size: {terms: 1, types: 0, coercions: 0, joins: 0/0}
+$trModule2 :: Addr#
+$trModule2 = "Core"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+$trModule1 :: TrName
+$trModule1 = TrNameS $trModule2
+
+-- RHS size: {terms: 3, types: 0, coercions: 0, joins: 0/0}
+$trModule :: Module
+$trModule = Module $trModule3 $trModule1
+
+-- RHS size: {terms: 11, types: 12, coercions: 0, joins: 0/0}
+main10 :: (Int, Int) -> ()
+main10
+  = \ (ds :: (Int, Int)) ->
+      case ds of { (x, y) ->
+      case x of { I# ipv -> case y of { I# ipv1 -> () } }
+      }
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+main_x :: Int
+main_x = I# 10000#
+
+-- RHS size: {terms: 9, types: 8, coercions: 8, joins: 0/0}
+main7
+  :: () -> Int64 -> State# RealWorld -> (# State# RealWorld, () #)
+main7
+  = \ _ (eta :: Int64) (eta1 :: State# RealWorld) ->
+      ((nf' main10 (main8 `cast` <Co:6>) main_x eta) `cast` <Co:2>) eta1
+
+-- RHS size: {terms: 6, types: 1, coercions: 22, joins: 0/0}
+main6 :: Benchmarkable
+main6
+  = Benchmarkable
+      (nf3 `cast` <Co:3>)
+      (nf2 `cast` <Co:5>)
+      (nf1 `cast` <Co:7>)
+      (main7 `cast` <Co:7>)
+      False
+
+-- RHS size: {terms: 3, types: 0, coercions: 0, joins: 0/0}
+main5 :: Benchmark
+main5 = Benchmark main11 main6
+
+-- RHS size: {terms: 3, types: 2, coercions: 0, joins: 0/0}
+main4 :: [Benchmark]
+main4 = : main5 []
+
+-- RHS size: {terms: 3, types: 0, coercions: 0, joins: 0/0}
+main3 :: Benchmark
+main3 = BenchGroup main13 main4
+
+-- RHS size: {terms: 3, types: 2, coercions: 0, joins: 0/0}
+main2 :: [Benchmark]
+main2 = : main3 []
+
+-- RHS size: {terms: 3, types: 0, coercions: 0, joins: 0/0}
+main1 :: State# RealWorld -> (# State# RealWorld, () #)
+main1 = defaultMain2 defaultConfig main2
+
+-- RHS size: {terms: 1, types: 0, coercions: 3, joins: 0/0}
+main :: IO ()
+main = main1 `cast` <Co:3>
+
+

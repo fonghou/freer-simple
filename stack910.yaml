@@ -1,0 +1,11 @@
+resolver: nightly-2025-01-21
+allow-newer: true
+
+packages:
+  - "."
+
+flags: {}
+extra-package-dbs: []
+
+ghc-options:
+  "$locals": -fhide-source-paths

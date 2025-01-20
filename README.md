@@ -1,23 +1,25 @@
-## This is a fork of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) using [**polysemy**](https://github.com/polysemy-research/polysemy) freer monad encoding (but NO higher-order effect stuff, which is very slow). Hence the branch name freer-simple-faster.
+## This is a fork of [**freer-simple**](https://github.com/lexi-lambda/freer-simple) using [**polysemy**](https://github.com/polysemy-research/polysemy) freer monad encoding (but NO higher-order effect stuff, which is very slow). Hence the branch name freer-simple-faster
 
-Run ```stack bench``` to see CountDown benchmarks
-  - mtl and fused-effect are fast only with inline.
-  - mtl and fused-effect become 100x slower when no inlining.
-  - freer-simple-faster is about 3x slower than mtl when both are inlined, about the same if no inline.
-  - polysemy is more than 100x slower than freer-simple-faster.
+**Note**: ghc-8.10 caused 70x slow down! see <https://gitlab.haskell.org/ghc/ghc/-/issues/19747>
 
+Run `stack bench` to see CountDown benchmarks
+
+- mtl and fused-effect are fast only with inline.
+- mtl and fused-effect become 100x slower when no inlining.
+- freer-simple-faster is about 3x slower than mtl when both are inlined, about the same if no inline.
+- polysemy is more than 100x slower than freer-simple-faster.
 
 # freer-simple — a friendly effect system for Haskell [![Build Status](https://travis-ci.org/lexi-lambda/freer-simple.svg?branch=master)](https://travis-ci.org/lexi-lambda/freer-simple)
 
-The `freer-simple` library is an implementation of an *extensible effect system* for Haskell, a general-purpose way of tracking effects at the type level and handling them in different ways. The concept of an “effect” is very general: it encompasses the things most people consider side-effects, like generating random values, interacting with the file system, and mutating state, but it also includes things like access to an immutable global environment and exception handling.
+The `freer-simple` library is an implementation of an _extensible effect system_ for Haskell, a general-purpose way of tracking effects at the type level and handling them in different ways. The concept of an “effect” is very general: it encompasses the things most people consider side-effects, like generating random values, interacting with the file system, and mutating state, but it also includes things like access to an immutable global environment and exception handling.
 
 The key features of `freer-simple` are:
 
-  - An efficient effect system for Haskell as a library.
+- An efficient effect system for Haskell as a library.
 
-  - Implementations for several common Haskell monads as effects, including `Reader`, `Writer`, `State`, `Error`, and others.
+- Implementations for several common Haskell monads as effects, including `Reader`, `Writer`, `State`, `Error`, and others.
 
-  - A combinator language for defining your own effects, designed to make simple, common use cases easy to read and write.
+- A combinator language for defining your own effects, designed to make simple, common use cases easy to read and write.
 
 [**For more details, see the package documentation on Hackage.**](https://hackage.haskell.org/package/freer-simple)
 

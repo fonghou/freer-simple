@@ -1,7 +1,4 @@
-{-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ >= 806
 {-# LANGUAGE QuantifiedConstraints #-}
-#endif
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -59,6 +56,7 @@ reinterpret4 f = interpret f . raiseUnder4
 ------------------------------------------------------------------------------
 
 -- | Like 'interpret', but with access to intermediate state.
+--   @stateful f s = transform (flip S.runStateT s) f@
 stateful ::
   (eff ~> S.StateT s (Eff r)) ->
   s ->
@@ -73,12 +71,10 @@ stateful f s (Eff m) = Eff $ \k ->
           Right y -> hoist (usingEff k) $ f y
 {-# INLINE stateful #-}
 
--- NB: @stateful f s = transform (flip S.runStateT s) f@, but is not
--- implemented as such, since 'transform' is available only >= 8.6.0
-
 ------------------------------------------------------------------------------
 
 -- | Run an effect, potentially short circuiting in its evaluation.
+--   @shortCircuit = transform E.runExceptT@
 shortCircuit ::
   (eff ~> E.ExceptT e (Eff r)) ->
   Eff (eff ': r) a ->
@@ -90,10 +86,6 @@ shortCircuit f (Eff m) = Eff $ \k -> E.runExceptT $
       Right y -> hoist (usingEff k) $ f y
 {-# INLINE shortCircuit #-}
 
--- NB: @shortCircuit = transform E.runExceptT@, but is not implemented as such,
--- since 'transform' is available only >= 8.6.0
-
-#if __GLASGOW_HASKELL__ >= 806
 ------------------------------------------------------------------------------
 -- | Run an effect via the side-effects of a monad transformer.
 transform
@@ -114,7 +106,6 @@ transform hoist' lower f (Eff m) = Eff $ \k -> lower $ m $ \u ->
     Left  x -> lift $ k x
     Right y -> hoist' (usingEff k) $ f y
 {-# INLINE transform #-}
-#endif
 
 ------------------------------------------------------------------------------
 

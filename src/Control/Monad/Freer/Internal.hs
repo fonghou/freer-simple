@@ -109,7 +109,7 @@ instance Monad (Eff f) where
     runEff (f z) k
   {-# INLINE (>>=) #-}
 
-instance (MonadBase b m, LastMember m effs) => MonadBase b (Eff effs) where
+instance (MonadBase b m, Monad b, LastMember m effs) => MonadBase b (Eff effs) where
   liftBase = sendM . liftBase
   {-# INLINE liftBase #-}
 
