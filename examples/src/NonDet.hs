@@ -17,7 +17,7 @@ test = do
   y <- select [4 :: Int, 5, 6]
   output ("y = " <> show y)
 
--- runM . runOutputEff (sendM . putStrLn) . runNonDetA @[] $ test
+-- runM . runOutputEff (sendM . putStrLn) . runNonDet @[] $ test
 
 replicateM' :: MonadPlus m => Int -> m a -> m a
 replicateM' n = join . select . replicate n
@@ -34,7 +34,7 @@ echo n = do
 --   runM
 -- . runInputEff (sendM getLine)
 -- . runOutputEff (sendM . putStrLn)
--- . runNonDetA @Maybe
+-- . runNonDet @Maybe
 
 -- $ echo 10
 -- :}

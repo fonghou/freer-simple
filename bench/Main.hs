@@ -5,7 +5,7 @@ import Data.DList
 
 import Control.Monad.Freer
 import Control.Monad.Freer.Error (runError)
-import Control.Monad.Freer.NonDet (runNonDetA)
+import Control.Monad.Freer.NonDet (runNonDet)
 import Control.Monad.Freer.State (get, runState)
 
 import qualified Control.Monad.Free as Free
@@ -175,8 +175,8 @@ main =
         "NQueens"
         [ bench "[]" $ whnf (id @[_]) $ queens 8
         , bench "fused.NonDet" $ whnf Eff.run . Eff.runNonDetA @[] $ queens 8
-        , bench "freer.NonDet @[]" $ whnf run . runNonDetA @[] $ queens 8
-        , bench "freer.NonDet @DList" $ whnf run . runNonDetA @DList $ queens 8
+        , bench "freer.NonDet @[]" $ whnf run . runNonDet @[] $ queens 8
+        , bench "freer.NonDet @DList" $ whnf run . runNonDet @DList $ queens 8
         ]
     , bgroup
         "HTTP Simple DSL"
