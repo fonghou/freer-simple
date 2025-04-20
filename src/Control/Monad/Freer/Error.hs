@@ -71,6 +71,18 @@ runError :: forall e effs a. Eff (Error e ': effs) a -> Eff effs (Either e a)
 runError = shortCircuit $ \(Error e) -> E.throwE e
 {-# INLINE runError #-}
 
+{- | Transform one 'Error' into another. This function can be used to aggregate
+ multiple errors into a single type.
+-}
+mapError ::
+  forall e1 e2 effs a.
+  Member (Error e2) effs =>
+  (Error e1 ~> Error e2)
+  -> Eff (Error e1 ': effs) a
+  -> Eff effs a
+mapError = subsume
+{-# INLINE mapError #-}
+
 -- | A catcher for Exceptions. Handlers are allowed to rethrow exceptions.
 catchError ::
   forall e effs a.
@@ -89,18 +101,6 @@ handleError ::
   Eff effs a
 handleError m handle = relay pure (\(Error e) _ -> handle e) m
 {-# INLINE handleError #-}
-
-{- | Transform one 'Error' into another. This function can be used to aggregate
- multiple errors into a single type.
--}
-mapError ::
-  forall e1 e2 r a.
-  Member (Error e2) r =>
-  (e1 -> e2) ->
-  Eff (Error e1 ': r) a ->
-  Eff r a
-mapError f m = handleError @e1 m $ \e -> throwError (f e)
-{-# INLINE mapError #-}
 
 ------------------------------------------------------------------------------
 

@@ -71,13 +71,25 @@ test3 = do
         get
   catchError @FooErr throwing (\e -> catching >> throwError e)
 
-runError' :: Either FooErr (String, String)
-runError' =
+run3 :: (String, Either FooErr String)
+run3 =
+  test3 & runError @FooErr & runState "State after Error" & run
+
+run3':: Either FooErr (String, String)
+run3' =
   test3 & runState "State before Error" & runError @FooErr & run
 
-runError'' :: (String, Either FooErr String)
-runError'' =
-  test3 & runError @FooErr & runState "State after Error" & run
+newtype BarErr = BarErr FooErr deriving (Show)
+
+test4 :: Members '[State String, Error BarErr] r => Eff r String
+test4 =
+  test3 & mapError (\case Error foo -> Error (BarErr foo))
+
+run4 =
+  test4 & runError @BarErr & runState "State after Error" & run
+
+run4' =
+  test4 & runState "State before Error" & runError @BarErr & run
 
 decr :: Members '[State Int, Error ()] r => Eff r ()
 decr = do
